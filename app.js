@@ -945,11 +945,13 @@ function renderPackages() {
 
 function renderBets() {
   el.quickBets.innerHTML = "";
+  const current = effectiveBet();
   bets.forEach((bet) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `quick-bet ${bet === state.bet ? "active" : ""}`;
+    button.className = `quick-bet ${bet === current ? "active" : ""}`;
     button.textContent = bet;
+    button.disabled = betControlsLocked();
     button.addEventListener("click", () => setBet(bet));
     el.quickBets.appendChild(button);
   });
@@ -972,6 +974,7 @@ function renderAutoOptions() {
 }
 
 function setBet(nextBet) {
+  if (betControlsLocked()) return;
   state.bet = Math.max(bets[0], Math.min(bets[bets.length - 1], nextBet));
   saveState();
   render();
@@ -985,16 +988,26 @@ function hasActiveFreeSpin() {
   return state.freeSpinsRemaining > 0;
 }
 
+function betControlsLocked() {
+  return state.spinning || state.bonusActive || hasActiveFreeSpin();
+}
+
+function effectiveBet() {
+  if (state.bonusActive || hasActiveFreeSpin()) return state.lastFreeSpinBet || state.bet;
+  return state.bet;
+}
+
 function canPlay() {
   return isConnectedToRitual() && (state.chips >= state.bet || hasActiveFreeSpin());
 }
 
 function render() {
+  const locked = betControlsLocked();
   document.documentElement.dataset.connected = isConnectedToRitual() ? "true" : "false";
   el.chips.textContent = state.chips.toLocaleString();
   el.remainingSpins.textContent = Math.floor(state.chips / state.bet).toLocaleString();
   el.freeSpinCounter.textContent = state.freeSpinsRemaining.toLocaleString();
-  el.betLabel.textContent = state.bet.toLocaleString();
+  el.betLabel.textContent = effectiveBet().toLocaleString();
   el.spinCount.textContent = state.spinCount.toLocaleString();
   el.bestWin.textContent = state.bestWin.toLocaleString();
   el.ritualBalance.textContent = `${state.ritualBalance} RITUAL`;
@@ -1018,6 +1031,9 @@ function render() {
   renderBets();
   renderAutoOptions();
   el.machine?.classList.toggle("machine--free-spins", Boolean(state.bonusActive || hasActiveFreeSpin()));
+  el.decreaseBet.disabled = locked;
+  el.increaseBet.disabled = locked;
+  el.maxBetButton.disabled = locked;
   document.querySelectorAll(".speed-btn").forEach((btn) => {
     const on = btn.dataset.speed === state.spinSpeed;
     btn.classList.toggle("active", on);
