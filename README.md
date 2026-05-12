@@ -37,6 +37,8 @@ Static mahjong slot-style game for Ritual testnet. Players buy demo chips by sen
 
 Open `index.html` directly in a browser, or serve the folder with any static server.
 
+Jika wallet extension (mis. MetaMask) tidak terdeteksi saat membuka `index.html` langsung, biasanya karena browser extension tidak diizinkan berjalan di `file://`. Solusi cepat: jalankan lewat static server (mis. `npx serve .`) atau aktifkan izin extension untuk "Allow access to file URLs".
+
 To test the Vercel build output locally:
 
 ```bash

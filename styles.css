@@ -1044,6 +1044,7 @@ button:disabled {
 }
 
 .auto-button {
+  position: relative;
   width: 64px;
   border-radius: 12px;
   background: linear-gradient(180deg, #35c995, #087052);
@@ -1054,6 +1055,25 @@ button:disabled {
 .auto-button.active {
   background: linear-gradient(180deg, #e2b766, #7d401a);
   color: #fff;
+}
+
+.auto-button[data-remaining]::after {
+  content: attr(data-remaining);
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 228, 160, 0.85);
+  background: linear-gradient(180deg, #ffe8a8, #c9983d 55%, #7a5220);
+  color: #1a120c;
+  font-size: 0.74rem;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 16px rgba(255, 210, 118, 0.18);
 }
 
 .bet-readout {

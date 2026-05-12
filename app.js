@@ -130,9 +130,8 @@ function sleep(ms) {
 }
 
 function sleepAuto(ms) {
-  // Faster sleep for auto spin mode
   if (state.autoSpinning) {
-    return new Promise((resolve) => setTimeout(resolve, Math.max(8, Math.round(ms * spinSpeedFactor() * 0.4))));
+    return new Promise((resolve) => setTimeout(resolve, Math.max(80, Math.round(ms * spinSpeedFactor() * 1.25))));
   }
   return sleep(ms);
 }
@@ -937,9 +936,11 @@ function render() {
   el.ritualBalance.textContent = `${state.ritualBalance} RITUAL`;
   el.sideRitualBalance.textContent = `${state.ritualBalance} RITUAL`;
   el.spinButton.disabled = state.spinning || !canPlay();
-  el.autoSpinButton.textContent = state.autoSpinning ? `Stop ${state.autoRemaining}` : "Auto";
+  el.autoSpinButton.textContent = state.autoSpinning ? "Stop" : "Auto";
   el.autoSpinButton.classList.toggle("active", state.autoSpinning);
   el.autoSpinButton.disabled = (!state.autoSpinning && !canPlay()) || state.bonusActive;
+  if (state.autoSpinning) el.autoSpinButton.setAttribute("data-remaining", String(state.autoRemaining));
+  else el.autoSpinButton.removeAttribute("data-remaining");
 
   if (!state.account) {
     el.networkStatus.textContent = "Not connected";
@@ -964,7 +965,11 @@ function render() {
 
 async function ensureRitualChain() {
   if (!window.ethereum) {
-    throw new Error("Wallet browser extension not found.");
+    const fileUrlHint =
+      window.location?.protocol === "file:"
+        ? " Kalau kamu buka via file://, aktifkan izin extension untuk File URLs atau jalankan via local server (http://localhost)."
+        : "";
+    throw new Error(`Wallet browser extension not found.${fileUrlHint}`);
   }
 
   try {
@@ -1197,7 +1202,7 @@ async function spin() {
   render();
 
   if (state.freeSpinsRemaining > 0) {
-    state.autoTimer = window.setTimeout(spin, spinDelay(1120));
+    state.autoTimer = window.setTimeout(spin, spinDelay(1400));
     return;
   }
 
@@ -1215,15 +1220,12 @@ async function spin() {
 
   // Auto spin logic - simplified
   if (state.autoSpinning && state.autoRemaining > 0) {
-    console.log(`Auto spin continuing, remaining: ${state.autoRemaining}`);
     state.autoTimer = window.setTimeout(() => {
       if (state.autoSpinning && state.autoRemaining > 0) {
-        console.log('Auto spin timer triggered');
         spin();
       }
-    }, 500); // Slower for testing
+    }, spinDelay(1350));
   } else if (state.autoSpinning && state.autoRemaining <= 0) {
-    console.log('Auto spin completed');
     stopAutoSpin();
     log("Auto Spin selesai.");
   }
@@ -1240,16 +1242,11 @@ function stopAutoSpin() {
 }
 
 function toggleAutoSpin() {
-  console.log('Auto spin button clicked');
-  
   if (state.autoSpinning) {
-    console.log('Stopping auto spin');
     stopAutoSpin();
     log("Auto Spin berhenti.");
     return;
   }
-
-  console.log('Starting auto spin');
   
   if (state.chips < state.bet) {
     log("Chip tidak cukup untuk Auto Spin.");
@@ -1261,15 +1258,10 @@ function toggleAutoSpin() {
     return;
   }
 
-  // Start auto spin
-  console.log('Setting auto spin state');
   state.autoSpinning = true;
   state.autoRemaining = state.selectedAutoSpins;
   log(`Auto Spin ${state.selectedAutoSpins} aktif.`);
   render();
-  
-  // Start first spin immediately
-  console.log('Starting first spin');
   spin();
 }
 
