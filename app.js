@@ -31,7 +31,7 @@ const chipPackages = [
 ];
 
 const SPIN_SPEED_IDS = ["slow", "normal", "turbo"];
-const MATH_PROFILE_IDS = ["balanced", "royal-domino", "high-domino"];
+const DEFAULT_MATH_PROFILE = "high-domino";
 const MATH_PROFILES = {
   balanced: {
     label: "Balanced",
@@ -127,7 +127,6 @@ const state = {
   bonusActive: false,
   lastFreeSpinBet: 0,
   spinSpeed: saved.spinSpeed,
-  mathProfile: saved.mathProfile,
 };
 
 const el = {
@@ -201,15 +200,7 @@ function setSpinSpeed(next) {
 }
 
 function activeMathProfile() {
-  return MATH_PROFILES[state.mathProfile] || MATH_PROFILES.balanced;
-}
-
-function setMathProfile(next) {
-  if (!MATH_PROFILE_IDS.includes(next) || state.spinning) return;
-  state.mathProfile = next;
-  saveState();
-  render();
-  log(`Mode: ${activeMathProfile().label}`);
+  return MATH_PROFILES[DEFAULT_MATH_PROFILE] || MATH_PROFILES.balanced;
 }
 
 function normalizeWeights(weights) {
@@ -253,14 +244,12 @@ function readSavedSettings() {
   try {
     const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
     const spinSpeed = SPIN_SPEED_IDS.includes(parsed.spinSpeed) ? parsed.spinSpeed : "normal";
-    const mathProfile = MATH_PROFILE_IDS.includes(parsed.mathProfile) ? parsed.mathProfile : "balanced";
     return {
       bet: bets.includes(Number(parsed.bet)) ? Number(parsed.bet) : bets[2],
       spinSpeed,
-      mathProfile,
     };
   } catch {
-    return { bet: bets[2], spinSpeed: "normal", mathProfile: "balanced" };
+    return { bet: bets[2], spinSpeed: "normal" };
   }
 }
 
@@ -298,10 +287,7 @@ function resetBonusState() {
 }
 
 function saveState() {
-  localStorage.setItem(
-    SETTINGS_KEY,
-    JSON.stringify({ bet: state.bet, spinSpeed: state.spinSpeed, mathProfile: state.mathProfile }),
-  );
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify({ bet: state.bet, spinSpeed: state.spinSpeed }));
 
   if (!state.account) return;
 
@@ -1037,12 +1023,6 @@ function render() {
     btn.setAttribute("aria-pressed", on ? "true" : "false");
     btn.disabled = state.spinning;
   });
-  document.querySelectorAll(".mode-btn").forEach((btn) => {
-    const on = btn.dataset.profile === state.mathProfile;
-    btn.classList.toggle("active", on);
-    btn.setAttribute("aria-pressed", on ? "true" : "false");
-    btn.disabled = state.spinning;
-  });
   applySpinSpeedTheme();
 }
 
@@ -1364,10 +1344,6 @@ el.increaseBet.addEventListener("click", () => {
 
 document.querySelectorAll(".speed-btn").forEach((btn) => {
   btn.addEventListener("click", () => setSpinSpeed(btn.dataset.speed));
-});
-
-document.querySelectorAll(".mode-btn").forEach((btn) => {
-  btn.addEventListener("click", () => setMathProfile(btn.dataset.profile));
 });
 
 if (window.ethereum) {
