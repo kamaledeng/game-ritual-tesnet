@@ -1,0 +1,402 @@
+:root {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --panel: #151b23;
+  --panel-2: #1c2430;
+  --ink: #f6f8fa;
+  --muted: #9da7b3;
+  --line: #303946;
+  --gold: #f4bd50;
+  --teal: #4dd4ac;
+  --rose: #e86b8f;
+  --blue: #72a7ff;
+  --danger: #ff8066;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(244, 189, 80, 0.14), transparent 32rem),
+    linear-gradient(145deg, #090d13 0%, #111824 55%, #15131d 100%);
+  color: var(--ink);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.play-surface {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+}
+
+.topbar,
+.machine__header,
+.controls,
+.theme-rail__header,
+.wallet-panel {
+  display: flex;
+  align-items: center;
+}
+
+.topbar {
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.eyebrow,
+.machine__header p {
+  margin: 0 0 4px;
+  color: var(--teal);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+h1 {
+  font-size: clamp(2rem, 5vw, 4.4rem);
+}
+
+h2 {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.wallet-panel {
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.network-pill,
+button,
+.stat,
+.status-log,
+.theme-rail,
+.machine,
+.stats-panel {
+  border: 1px solid var(--line);
+  background: rgba(21, 27, 35, 0.88);
+}
+
+.network-pill {
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  color: var(--muted);
+}
+
+button {
+  min-height: 44px;
+  border-radius: 6px;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--gold);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.icon-button,
+.secondary-button {
+  padding: 0 16px;
+}
+
+.primary-button {
+  min-width: 150px;
+  border-color: rgba(244, 189, 80, 0.8);
+  background: linear-gradient(180deg, #f6c65f, #c77c29);
+  color: #17110a;
+  font-weight: 900;
+}
+
+.secondary-button {
+  border-color: rgba(77, 212, 172, 0.45);
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 230px;
+  gap: 16px;
+}
+
+.theme-rail,
+.machine,
+.stats-panel {
+  border-radius: 8px;
+}
+
+.theme-rail,
+.stats-panel {
+  padding: 14px;
+}
+
+.theme-rail__header {
+  justify-content: space-between;
+  margin-bottom: 12px;
+  color: var(--muted);
+}
+
+.theme-list {
+  display: grid;
+  gap: 8px;
+  max-height: 634px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.theme-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+  text-align: left;
+}
+
+.theme-card.active {
+  border-color: var(--gold);
+  background: rgba(244, 189, 80, 0.13);
+}
+
+.theme-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--panel-2);
+  font-size: 1.2rem;
+}
+
+.theme-name {
+  display: block;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.theme-note {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.machine {
+  min-height: 640px;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgba(114, 167, 255, 0.12), transparent 22rem),
+    rgba(21, 27, 35, 0.9);
+}
+
+.machine__header {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.balance-box {
+  min-width: 132px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #10161f;
+  text-align: right;
+}
+
+.balance-box span,
+.stat span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.balance-box strong,
+.stat strong {
+  font-size: 1.35rem;
+}
+
+.reels {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(64px, 1fr));
+  gap: 10px;
+  margin: 28px 0 16px;
+}
+
+.reel {
+  display: grid;
+  grid-template-rows: repeat(3, minmax(78px, 1fr));
+  gap: 10px;
+}
+
+.symbol {
+  min-height: 78px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #202b39, #121922);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font-size: clamp(2rem, 5vw, 3.4rem);
+}
+
+.symbol.win {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(244, 189, 80, 0.24), 0 0 30px rgba(244, 189, 80, 0.2);
+}
+
+.result-strip {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: #10161f;
+  color: var(--muted);
+}
+
+.result-strip strong {
+  color: var(--gold);
+  font-size: 1.3rem;
+}
+
+.controls {
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.bet-control {
+  min-width: min(330px, 100%);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+}
+
+input[type="range"] {
+  accent-color: var(--gold);
+}
+
+.stats-panel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.stat,
+.status-log {
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.status-log {
+  min-height: 126px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.spinning .symbol {
+  animation: pulse 180ms linear infinite alternate;
+}
+
+@keyframes pulse {
+  from {
+    transform: translateY(-2px);
+    filter: brightness(1.2);
+  }
+  to {
+    transform: translateY(2px);
+    filter: brightness(0.75);
+  }
+}
+
+@media (max-width: 980px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .theme-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: none;
+  }
+
+  .machine {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .app-shell {
+    padding: 14px;
+  }
+
+  .topbar,
+  .machine__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .wallet-panel {
+    justify-content: stretch;
+  }
+
+  .wallet-panel > * {
+    flex: 1;
+  }
+
+  .theme-list {
+    grid-template-columns: 1fr;
+  }
+
+  .reels {
+    gap: 6px;
+  }
+
+  .reel {
+    gap: 6px;
+  }
+
+  .symbol {
+    min-height: 58px;
+    border-radius: 6px;
+  }
+
+  .controls > button {
+    flex: 1 1 100%;
+  }
+}
