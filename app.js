@@ -18,11 +18,11 @@ const autoSpinOptions = [10, 50, 100];
 const BOARD_COLUMNS = 5;
 const BOARD_ROWS = 4;
 const baseCascadeMultipliers = [1, 2, 3, 5];
-const freeSpinCascadeMultipliers = [2, 3, 5, 8];
+const freeSpinCascadeMultipliers = [2, 4, 6, 10];
 const freeSpinAwards = {
-  3: 8,
-  4: 12,
-  5: 15,
+  3: 12,
+  4: 14,
+  5: 16,
 };
 const chipPackages = [
   { ritual: "0.01", chips: 1000 },
@@ -433,6 +433,21 @@ function makeGrid(options = {}) {
   );
 }
 
+function applyGoldPlating(grid, options = {}) {
+  const { bonus = false } = options;
+  const chance = bonus ? 0.2 : 0.14;
+  for (let columnIndex = 1; columnIndex <= 3; columnIndex += 1) {
+    grid[columnIndex].forEach((symbol) => {
+      if (symbol.plated !== undefined) return;
+      if (symbol.scatter || symbol.name === "wild") {
+        symbol.plated = false;
+        return;
+      }
+      symbol.plated = Math.random() < chance;
+    });
+  }
+}
+
 function pickPayingSymbol() {
   return pickPayingWeightedSymbol();
 }
@@ -517,9 +532,21 @@ function chooseSpinTarget(options = {}) {
 function buildSpinGrid(options = {}) {
   const target = chooseSpinTarget(options);
 
-  if (target === "dead") return { grid: makeDeadGrid(options), target };
-  if (target === "near") return { grid: makeNearMissGrid(options), target };
-  if (target === "bonus") return { grid: makeScatterTriggerGrid(), target };
+  if (target === "dead") {
+    const grid = makeDeadGrid(options);
+    applyGoldPlating(grid, options);
+    return { grid, target };
+  }
+  if (target === "near") {
+    const grid = makeNearMissGrid(options);
+    applyGoldPlating(grid, options);
+    return { grid, target };
+  }
+  if (target === "bonus") {
+    const grid = makeScatterTriggerGrid();
+    applyGoldPlating(grid, options);
+    return { grid, target };
+  }
 
   const roll = Math.random();
   const grid = makeGrid(options);
@@ -550,6 +577,7 @@ function buildSpinGrid(options = {}) {
     }
   }
 
+  applyGoldPlating(grid, options);
   return { grid, target };
 }
 
@@ -622,7 +650,7 @@ function drawReels(grid = makeGrid({ allowScatter: false }), winningCells = [], 
     column.forEach((symbol, rowIndex) => {
       const isWinning = winningSet.has(cellKey(columnIndex, rowIndex));
       const cell = document.createElement("div");
-      cell.className = `symbol symbol--${symbol.tone} ${
+      cell.className = `symbol symbol--${symbol.tone} ${symbol.plated ? "symbol--plated" : ""} ${
         isWinning ? "win" : ""
       } ${breaking && isWinning ? "breaking" : ""}`;
       if (landPop) {
@@ -638,11 +666,24 @@ function drawReels(grid = makeGrid({ allowScatter: false }), winningCells = [], 
 
 function makeCascadeGrid(grid, winningCells, options = {}) {
   const winningSet = new Set(winningCells);
-  return grid.map((column, columnIndex) => {
-    const survivors = column.filter((_, rowIndex) => !winningSet.has(cellKey(columnIndex, rowIndex)));
+  const wild = getSymbol("wild");
+  const nextGrid = grid.map((column, columnIndex) => {
+    const survivors = [];
+    column.forEach((symbol, rowIndex) => {
+      const key = cellKey(columnIndex, rowIndex);
+      if (winningSet.has(key)) {
+        if (columnIndex >= 1 && columnIndex <= 3 && symbol.plated && !symbol.scatter && symbol.name !== "wild") {
+          survivors.push(cloneSymbol(wild));
+        }
+        return;
+      }
+      survivors.push(symbol);
+    });
     const refill = Array.from({ length: BOARD_ROWS - survivors.length }, () => randomSymbol(options));
     return [...refill, ...survivors];
   });
+  applyGoldPlating(nextGrid, options);
+  return nextGrid;
 }
 
 function makeForcedWinGrid(options = {}) {
@@ -726,10 +767,8 @@ function scatterCells(grid) {
 }
 
 function scatterAward(scatterCount) {
-  if (scatterCount >= 5) return freeSpinAwards[5];
-  if (scatterCount >= 4) return freeSpinAwards[4];
-  if (scatterCount >= 3) return freeSpinAwards[3];
-  return 0;
+  if (scatterCount < 3) return 0;
+  return 12 + (scatterCount - 3) * 2;
 }
 
 function renderMultiplier(activeIndex = -1, bonus = state.bonusActive) {
@@ -1011,11 +1050,10 @@ async function spin() {
     sfxScatterFanfare();
     await sleepAuto(520);
     if (isFreeSpin) {
-      const retrigger = Math.min(5, Math.ceil(award / 3));
-      state.freeSpinsRemaining += retrigger;
-      state.freeSpinsTotal += retrigger;
-      showBonusBanner(`Retrigger +${retrigger} free spins dari Golden Dragon scatter.`);
-      log(`Bonus retrigger +${retrigger} free spins.`);
+      state.freeSpinsRemaining += award;
+      state.freeSpinsTotal += award;
+      showBonusBanner(`Retrigger +${award} free spins dari Golden Dragon scatter.`);
+      log(`Bonus retrigger +${award} free spins.`);
     } else {
       state.freeSpinsRemaining += award;
       state.freeSpinsTotal = award;
@@ -1056,7 +1094,7 @@ async function spin() {
     await sleepAuto(isFreeSpin ? 480 : 400);
     el.reelsFrame?.classList.remove("cascade-settling");
     grid = makeCascadeGrid(grid, winningCells, { bonus: isFreeSpin, allowScatter: isFreeSpin });
-    drawReels(grid);
+    drawReels(grid, [], false, true);
     await sleepAuto(isFreeSpin ? 360 : 280);
     cascadeIndex += 1;
   }

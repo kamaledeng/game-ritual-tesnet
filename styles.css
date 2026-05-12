@@ -580,6 +580,32 @@ button:disabled {
   pointer-events: none;
 }
 
+.symbol--plated {
+  border-color: rgba(255, 231, 140, 0.95);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 18px rgba(255, 222, 132, 0.22),
+    0 5px 12px rgba(0, 0, 0, 0.26),
+    0 3px 0 var(--tile-shadow);
+}
+
+.symbol--plated::after {
+  content: "";
+  position: absolute;
+  inset: -55%;
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg 280deg,
+      rgba(255, 244, 198, 0.75) 300deg,
+      transparent 325deg 360deg
+    );
+  opacity: 0.42;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  animation: dockSheen 3.4s linear infinite;
+}
+
 .tile-corner {
   position: absolute;
   top: 7px;
@@ -1254,8 +1280,13 @@ button:disabled {
 @keyframes symbolLandPop {
   0% {
     opacity: 0;
-    transform: translateY(-14px) scale(0.9);
-    filter: blur(2px);
+    transform: translateY(-82px) scale(0.92);
+    filter: blur(3px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(8px) scale(1.01);
+    filter: blur(0.15px);
   }
   100% {
     opacity: 1;
