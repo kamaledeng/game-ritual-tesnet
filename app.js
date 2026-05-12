@@ -40,6 +40,8 @@ const state = {
   spinCount: saved.spinCount,
   bestWin: saved.bestWin,
   spinning: false,
+  autoSpinning: false,
+  autoTimer: null,
 };
 
 const el = {
@@ -57,6 +59,7 @@ const el = {
   increaseBet: document.querySelector("#increaseBet"),
   quickBets: document.querySelector("#quickBets"),
   spinButton: document.querySelector("#spinButton"),
+  autoSpinButton: document.querySelector("#autoSpinButton"),
   maxBetButton: document.querySelector("#maxBetButton"),
   packageList: document.querySelector("#packageList"),
   buyChipsButton: document.querySelector("#buyChipsButton"),
@@ -130,6 +133,53 @@ function randomSymbol() {
 
 function makeGrid() {
   return Array.from({ length: 6 }, () => Array.from({ length: 5 }, () => randomSymbol()));
+}
+
+function cloneSymbol(symbol) {
+  return { ...symbol };
+}
+
+function pickPayingSymbol() {
+  const payingSymbols = symbols.filter((symbol) => symbol.pay > 0);
+  return payingSymbols[Math.floor(Math.random() * payingSymbols.length)];
+}
+
+function buildSpinGrid() {
+  const roll = Math.random();
+  const target =
+    roll < 0.64 ? "loss" : roll < 0.88 ? "small" : roll < 0.97 ? "medium" : "big";
+
+  if (target === "loss") {
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      const grid = makeGrid();
+      if (calculateWin(grid).payout === 0) return grid;
+    }
+    return makeGrid();
+  }
+
+  const grid = makeGrid();
+  const matchSymbol = pickPayingSymbol();
+  const matchCount = target === "small" ? 8 : target === "medium" ? 10 : 13;
+  const used = new Set();
+
+  while (used.size < matchCount) {
+    const column = Math.floor(Math.random() * 6);
+    const row = Math.floor(Math.random() * 5);
+    const key = `${column}-${row}`;
+    if (!used.has(key)) {
+      used.add(key);
+      grid[column][row] = cloneSymbol(matchSymbol);
+    }
+  }
+
+  if (target === "big") {
+    const wild = symbols.find((symbol) => symbol.name === "wild");
+    for (let count = 0; count < 3; count += 1) {
+      grid[Math.floor(Math.random() * 6)][Math.floor(Math.random() * 5)] = cloneSymbol(wild);
+    }
+  }
+
+  return grid;
 }
 
 function drawReels(grid = makeGrid(), winningNames = []) {
@@ -221,6 +271,9 @@ function render() {
   el.ritualBalance.textContent = `${state.ritualBalance} RITUAL`;
   el.sideRitualBalance.textContent = `${state.ritualBalance} RITUAL`;
   el.spinButton.disabled = state.spinning || state.chips < state.bet;
+  el.autoSpinButton.textContent = state.autoSpinning ? "Stop" : "Auto";
+  el.autoSpinButton.classList.toggle("active", state.autoSpinning);
+  el.autoSpinButton.disabled = !state.autoSpinning && state.chips < state.bet;
 
   if (!state.account) {
     el.networkStatus.textContent = "Not connected";
@@ -305,6 +358,7 @@ async function buyChips() {
 async function spin() {
   if (state.spinning) return;
   if (state.chips < state.bet) {
+    stopAutoSpin();
     log("Chip tidak cukup. Beli chip dulu atau turunkan bet.");
     return;
   }
@@ -320,7 +374,7 @@ async function spin() {
 
   await new Promise((resolve) => setTimeout(resolve, 750));
 
-  const grid = makeGrid();
+  const grid = buildSpinGrid();
   const { payout, winningNames } = calculateWin(grid);
   state.chips += payout;
   state.bestWin = Math.max(state.bestWin, payout);
@@ -334,11 +388,48 @@ async function spin() {
 
   saveState();
   render();
+
+  if (state.autoSpinning) {
+    if (state.chips >= state.bet) {
+      state.autoTimer = window.setTimeout(spin, 900);
+    } else {
+      stopAutoSpin();
+      log("Auto Spin berhenti karena chip tidak cukup.");
+    }
+  }
+}
+
+function stopAutoSpin() {
+  state.autoSpinning = false;
+  if (state.autoTimer) {
+    window.clearTimeout(state.autoTimer);
+    state.autoTimer = null;
+  }
+  render();
+}
+
+function toggleAutoSpin() {
+  if (state.autoSpinning) {
+    stopAutoSpin();
+    log("Auto Spin berhenti.");
+    return;
+  }
+
+  if (state.chips < state.bet) {
+    log("Chip tidak cukup untuk Auto Spin.");
+    return;
+  }
+
+  state.autoSpinning = true;
+  log("Auto Spin aktif.");
+  render();
+  spin();
 }
 
 el.connectWallet.addEventListener("click", connectWallet);
 el.buyChipsButton.addEventListener("click", buyChips);
 el.spinButton.addEventListener("click", spin);
+el.autoSpinButton.addEventListener("click", toggleAutoSpin);
 el.maxBetButton.addEventListener("click", () => setBet(bets[bets.length - 1]));
 el.decreaseBet.addEventListener("click", () => {
   const index = Math.max(0, bets.indexOf(state.bet) - 1);

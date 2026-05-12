@@ -391,7 +391,8 @@ button:disabled {
 }
 
 .round-button,
-.turbo-button {
+.turbo-button,
+.auto-button {
   width: 48px;
   min-width: 48px;
   height: 48px;
@@ -406,6 +407,19 @@ button:disabled {
   width: 58px;
   border-radius: 12px;
   font-size: 0.82rem;
+}
+
+.auto-button {
+  width: 64px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #2bd39b, #0a7b58);
+  color: #fff8d2;
+  font-size: 0.86rem;
+}
+
+.auto-button.active {
+  background: linear-gradient(180deg, #ff6d68, #a6282c);
+  color: #fff;
 }
 
 .bet-readout {
@@ -618,7 +632,7 @@ button:disabled {
 
   .bottom-console {
     display: grid;
-    grid-template-columns: 48px 1fr 48px 58px;
+    grid-template-columns: 48px 1fr 48px 58px 64px;
     border-radius: 16px;
   }
 
