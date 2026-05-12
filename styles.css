@@ -1476,6 +1476,59 @@ html[data-connected="false"] .secondary-button {
   overflow-wrap: anywhere;
 }
 
+.creator-badge {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 228, 160, 0.22);
+  background: linear-gradient(180deg, rgba(39, 24, 15, 0.82), rgba(17, 10, 8, 0.7));
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 140ms ease, border-color 140ms ease, filter 140ms ease;
+}
+
+.creator-badge:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 228, 160, 0.5);
+  filter: brightness(1.06);
+}
+
+.creator-badge__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 228, 160, 0.35);
+  object-fit: cover;
+}
+
+.creator-badge__text {
+  display: grid;
+  gap: 0;
+  line-height: 1.05;
+}
+
+.creator-badge__kicker {
+  color: rgba(215, 195, 162, 0.82);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.creator-badge__name {
+  color: #fff0bd;
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
 .spinning .symbol {
   animation: reelSymbolSpin 95ms linear infinite alternate;
   filter: blur(0.35px);
@@ -1914,5 +1967,11 @@ html[data-connected="false"] .secondary-button {
   .spin-button {
     grid-column: 1 / -1;
     justify-self: center;
+  }
+
+  .creator-badge {
+    right: 10px;
+    bottom: 10px;
+    padding: 8px 10px;
   }
 }
