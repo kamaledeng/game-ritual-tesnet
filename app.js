@@ -1037,7 +1037,7 @@ async function spin() {
     if (payout <= 0 || winningCells.length === 0) {
       // If first cascade and no win, force a small win
       if (cascadeIndex === 0 && totalPayout === 0) {
-        const forcedGrid = makeForcedWinGrid(options);
+        const forcedGrid = makeForcedWinGrid({ bonus: isFreeSpin, allowScatter: true });
         grid = forcedGrid;
         const forcedResult = calculateWin(grid, multiplier, spinBet);
         if (forcedResult.payout > 0) {
