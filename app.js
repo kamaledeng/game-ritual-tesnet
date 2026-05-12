@@ -31,6 +31,54 @@ const chipPackages = [
 ];
 
 const SPIN_SPEED_IDS = ["slow", "normal", "turbo"];
+const MATH_PROFILE_IDS = ["balanced", "royal-domino", "high-domino"];
+const MATH_PROFILES = {
+  balanced: {
+    label: "Balanced",
+    payoutDivisor: 25,
+    bonusTriggerChance: 0.0045,
+    symbolChances: {
+      base: { scatter: 0.0074, wild: 0.0092 },
+      bonus: { scatter: 0.0046, wild: 0.012 },
+    },
+    weights: {
+      base: { dead: 0.35, near: 0.2, small: 0.3, medium: 0.13, big: 0.02 },
+      bonus: { dead: 0.25, near: 0.2, small: 0.3, medium: 0.17, big: 0.08 },
+    },
+    deadStreakCap: 5,
+    deadStreakShift: 0.02,
+  },
+  "royal-domino": {
+    label: "Royal Domino",
+    payoutDivisor: 28,
+    bonusTriggerChance: 0.0032,
+    symbolChances: {
+      base: { scatter: 0.006, wild: 0.0085 },
+      bonus: { scatter: 0.004, wild: 0.0105 },
+    },
+    weights: {
+      base: { dead: 0.45, near: 0.22, small: 0.25, medium: 0.07, big: 0.01 },
+      bonus: { dead: 0.3, near: 0.25, small: 0.28, medium: 0.14, big: 0.03 },
+    },
+    deadStreakCap: 6,
+    deadStreakShift: 0.012,
+  },
+  "high-domino": {
+    label: "High Domino",
+    payoutDivisor: 25,
+    bonusTriggerChance: 0.0038,
+    symbolChances: {
+      base: { scatter: 0.0065, wild: 0.0105 },
+      bonus: { scatter: 0.0044, wild: 0.013 },
+    },
+    weights: {
+      base: { dead: 0.5, near: 0.18, small: 0.22, medium: 0.08, big: 0.02 },
+      bonus: { dead: 0.28, near: 0.22, small: 0.26, medium: 0.17, big: 0.07 },
+    },
+    deadStreakCap: 6,
+    deadStreakShift: 0.016,
+  },
+};
 
 const symbols = [
   { name: "char-1", suit: "character", rank: 1, pay: 5, tone: "red", mark: "\u4e00", suitMark: "\u842c" },
@@ -79,6 +127,7 @@ const state = {
   bonusActive: false,
   lastFreeSpinBet: 0,
   spinSpeed: saved.spinSpeed,
+  mathProfile: saved.mathProfile,
 };
 
 const el = {
@@ -151,16 +200,67 @@ function setSpinSpeed(next) {
   else log("Normal Speed — standard casino rhythm.");
 }
 
+function activeMathProfile() {
+  return MATH_PROFILES[state.mathProfile] || MATH_PROFILES.balanced;
+}
+
+function setMathProfile(next) {
+  if (!MATH_PROFILE_IDS.includes(next) || state.spinning) return;
+  state.mathProfile = next;
+  saveState();
+  render();
+  log(`Mode: ${activeMathProfile().label}`);
+}
+
+function normalizeWeights(weights) {
+  const entries = Object.entries(weights);
+  const total = entries.reduce((sum, [, v]) => sum + v, 0);
+  if (total <= 0) return weights;
+  return Object.fromEntries(entries.map(([k, v]) => [k, v / total]));
+}
+
+function applyDeadStreakShift(weights, profile) {
+  const streak = Math.min(state.deadStreak, profile.deadStreakCap);
+  const shift = Math.max(0, streak * profile.deadStreakShift);
+  if (shift <= 0) return weights;
+
+  const minDead = 0.12;
+  const removable = Math.max(0, weights.dead - minDead);
+  const removed = Math.min(removable, shift);
+  if (removed <= 0) return weights;
+
+  const next = { ...weights };
+  next.dead -= removed;
+  next.near += removed * 0.32;
+  next.small += removed * 0.44;
+  next.medium += removed * 0.18;
+  next.big += removed * 0.06;
+  return normalizeWeights(next);
+}
+
+function pickWeighted(weights) {
+  const entries = Object.entries(weights);
+  const total = entries.reduce((sum, [, v]) => sum + v, 0);
+  let r = Math.random() * total;
+  for (const [key, value] of entries) {
+    r -= value;
+    if (r <= 0) return key;
+  }
+  return entries[entries.length - 1][0];
+}
+
 function readSavedSettings() {
   try {
     const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
     const spinSpeed = SPIN_SPEED_IDS.includes(parsed.spinSpeed) ? parsed.spinSpeed : "normal";
+    const mathProfile = MATH_PROFILE_IDS.includes(parsed.mathProfile) ? parsed.mathProfile : "balanced";
     return {
       bet: bets.includes(Number(parsed.bet)) ? Number(parsed.bet) : bets[2],
       spinSpeed,
+      mathProfile,
     };
   } catch {
-    return { bet: bets[2], spinSpeed: "normal" };
+    return { bet: bets[2], spinSpeed: "normal", mathProfile: "balanced" };
   }
 }
 
@@ -198,7 +298,10 @@ function resetBonusState() {
 }
 
 function saveState() {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify({ bet: state.bet, spinSpeed: state.spinSpeed }));
+  localStorage.setItem(
+    SETTINGS_KEY,
+    JSON.stringify({ bet: state.bet, spinSpeed: state.spinSpeed, mathProfile: state.mathProfile }),
+  );
 
   if (!state.account) return;
 
@@ -477,8 +580,10 @@ function pickPayingWeightedSymbol() {
 function randomSymbol(options = {}) {
   const { bonus = false, allowScatter = true } = options;
   const roll = Math.random();
-  const scatterChance = bonus ? 0.0046 : 0.0074;
-  const wildChance = bonus ? 0.012 : 0.0092;
+  const profile = activeMathProfile();
+  const symbolChances = bonus ? profile.symbolChances.bonus : profile.symbolChances.base;
+  const scatterChance = symbolChances.scatter;
+  const wildChance = symbolChances.wild;
 
   if (allowScatter && roll < scatterChance) return cloneSymbol(getSymbol("gold-dragon-scatter"));
   if (roll < scatterChance + wildChance) return cloneSymbol(getSymbol("wild"));
@@ -551,41 +656,12 @@ function randomNonMatchingSymbol(matchSymbol) {
 
 function chooseSpinTarget(options = {}) {
   const { bonus = false } = options;
-  const roll = Math.random();
+  const profile = activeMathProfile();
+  if (!bonus && Math.random() < profile.bonusTriggerChance) return "bonus";
 
-  if (!bonus && roll < 0.0045) return "bonus";
-
-  if (bonus) {
-    if (roll < 0.25) return "dead";
-    if (roll < 0.45) return "near";
-    if (roll < 0.75) return "small";
-    if (roll < 0.92) return "medium";
-    return "big";
-  }
-
-  const warm = Math.min(state.deadStreak, 5) * 0.03;
-
-  if (state.deadStreak >= 5) {
-    if (roll < 0.25 - warm * 0.3) return "dead";
-    if (roll < 0.45 - warm * 0.3) return "near";
-    if (roll < 0.75 - warm * 0.2) return "small";
-    if (roll < 0.94) return "medium";
-    return "big";
-  }
-
-  if (state.deadStreak >= 3) {
-    if (roll < 0.3 - warm * 0.35) return "dead";
-    if (roll < 0.5 - warm * 0.35) return "near";
-    if (roll < 0.8 - warm * 0.25) return "small";
-    if (roll < 0.96) return "medium";
-    return "big";
-  }
-
-  if (roll < 0.35 - warm * 0.4) return "dead";
-  if (roll < 0.55 - warm * 0.4) return "near";
-  if (roll < 0.85 - warm * 0.3) return "small";
-  if (roll < 0.98) return "medium";
-  return "big";
+  const baseWeights = bonus ? profile.weights.bonus : profile.weights.base;
+  const shifted = bonus ? normalizeWeights({ ...baseWeights }) : applyDeadStreakShift(normalizeWeights({ ...baseWeights }), profile);
+  return pickWeighted(shifted);
 }
 
 function buildSpinGrid(options = {}) {
@@ -783,6 +859,7 @@ function makeControlledCascadeGrid(grid, winningCells, allowFollowUp, options = 
 }
 
 function calculateWin(grid, multiplier = 1, betAmount = state.bet) {
+  const divisor = activeMathProfile().payoutDivisor;
   let payout = 0;
   const winningCells = new Set();
   for (const symbol of symbols) {
@@ -808,7 +885,7 @@ function calculateWin(grid, multiplier = 1, betAmount = state.bet) {
 
     if (streak >= 3) {
       cellsForSymbol.forEach((key) => winningCells.add(key));
-      payout += Math.max(1, Math.floor((betAmount * symbol.pay * ways * multiplier) / 25));
+      payout += Math.max(1, Math.floor((betAmount * symbol.pay * ways * multiplier) / divisor));
     }
   }
 
@@ -956,6 +1033,12 @@ function render() {
   el.machine?.classList.toggle("machine--free-spins", Boolean(state.bonusActive || hasActiveFreeSpin()));
   document.querySelectorAll(".speed-btn").forEach((btn) => {
     const on = btn.dataset.speed === state.spinSpeed;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.disabled = state.spinning;
+  });
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    const on = btn.dataset.profile === state.mathProfile;
     btn.classList.toggle("active", on);
     btn.setAttribute("aria-pressed", on ? "true" : "false");
     btn.disabled = state.spinning;
@@ -1281,6 +1364,10 @@ el.increaseBet.addEventListener("click", () => {
 
 document.querySelectorAll(".speed-btn").forEach((btn) => {
   btn.addEventListener("click", () => setSpinSpeed(btn.dataset.speed));
+});
+
+document.querySelectorAll(".mode-btn").forEach((btn) => {
+  btn.addEventListener("click", () => setMathProfile(btn.dataset.profile));
 });
 
 if (window.ethereum) {
