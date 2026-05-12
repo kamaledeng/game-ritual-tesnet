@@ -1,10 +1,12 @@
-# Ritual Mahjong Ways
+# Ritual Mahjong Ways: Fan Testnet Demo
 
 Static mahjong slot-style game for Ritual testnet. Players buy demo chips by sending Ritual testnet tokens to the configured owner address, then use those chips to spin.
 
 ## Features
 
 - One mahjong slot game: Ritual Mahjong Ways
+- Fan/testnet demo positioning, not an official Ritual game
+- Ritual logo links to `https://www.ritualfoundation.org/`
 - Chip balances are stored per connected wallet address
 - Chip cashier using Ritual testnet wallet transactions
 - Owner payment address: `0xcf3da8d27bc354c8beb13a98205043e5c0967232`
