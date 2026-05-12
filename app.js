@@ -25,13 +25,18 @@ const chipPackages = [
 ];
 
 const symbols = [
-  { icon: "萬", name: "wan", pay: 3, tone: "red" },
-  { icon: "筒", name: "tong", pay: 4, tone: "blue" },
-  { icon: "索", name: "suo", pay: 5, tone: "green" },
-  { icon: "東", name: "east", pay: 6, tone: "purple" },
-  { icon: "中", name: "red-dragon", pay: 8, tone: "red" },
-  { icon: "發", name: "fortune", pay: 12, tone: "gold" },
-  { icon: "🀄", name: "wild", pay: 0, tone: "gold" },
+  { name: "char-1", suit: "character", rank: 1, pay: 3, tone: "red", mark: "一", suitMark: "萬" },
+  { name: "char-5", suit: "character", rank: 5, pay: 5, tone: "red", mark: "五", suitMark: "萬" },
+  { name: "char-8", suit: "character", rank: 8, pay: 7, tone: "red", mark: "八", suitMark: "萬" },
+  { name: "dot-2", suit: "dots", rank: 2, pay: 3, tone: "blue", mark: "2", suitMark: "筒" },
+  { name: "dot-5", suit: "dots", rank: 5, pay: 5, tone: "blue", mark: "5", suitMark: "筒" },
+  { name: "bamboo-3", suit: "bamboo", rank: 3, pay: 4, tone: "green", mark: "3", suitMark: "索" },
+  { name: "bamboo-6", suit: "bamboo", rank: 6, pay: 6, tone: "green", mark: "6", suitMark: "索" },
+  { name: "east", suit: "wind", rank: 0, pay: 8, tone: "blue", mark: "東", suitMark: "風" },
+  { name: "red-dragon", suit: "dragon", rank: 0, pay: 10, tone: "red", mark: "中", suitMark: "龍" },
+  { name: "green-dragon", suit: "dragon", rank: 0, pay: 12, tone: "green", mark: "發", suitMark: "龍" },
+  { name: "white-dragon", suit: "dragon", rank: 0, pay: 14, tone: "blue", mark: "白", suitMark: "龍" },
+  { name: "wild", suit: "wild", rank: 0, pay: 0, tone: "gold", mark: "百搭", suitMark: "WILD" },
 ];
 
 const saved = readSavedSettings();
@@ -113,12 +118,7 @@ function resetWalletState() {
 }
 
 function saveState() {
-  localStorage.setItem(
-    SETTINGS_KEY,
-    JSON.stringify({
-      bet: state.bet,
-    }),
-  );
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify({ bet: state.bet }));
 
   if (!state.account) return;
 
@@ -229,6 +229,38 @@ function cellKey(columnIndex, rowIndex) {
   return `${columnIndex}-${rowIndex}`;
 }
 
+function makePips(symbol) {
+  return Array.from({ length: symbol.rank }, (_, index) => {
+    if (symbol.suit === "dots") return `<i class="pip dot dot-${(index % 3) + 1}"></i>`;
+    if (symbol.suit === "bamboo") return `<i class="pip bamboo"></i>`;
+    return "";
+  }).join("");
+}
+
+function tileFace(symbol) {
+  if (symbol.suit === "dots" || symbol.suit === "bamboo") {
+    return `
+      <span class="tile-corner">${symbol.rank}</span>
+      <span class="tile-suit">${symbol.suitMark}</span>
+      <span class="tile-pips tile-pips--${symbol.rank}">${makePips(symbol)}</span>
+    `;
+  }
+
+  if (symbol.suit === "character") {
+    return `
+      <span class="tile-corner">${symbol.mark}</span>
+      <span class="tile-main">${symbol.mark}</span>
+      <span class="tile-sub">${symbol.suitMark}</span>
+    `;
+  }
+
+  return `
+    <span class="tile-corner">${symbol.suitMark}</span>
+    <span class="tile-main">${symbol.mark}</span>
+    <span class="tile-sub">${symbol.suitMark}</span>
+  `;
+}
+
 function drawReels(grid = makeGrid(), winningCells = [], breaking = false) {
   const winningSet = new Set(winningCells);
   el.reels.innerHTML = "";
@@ -241,7 +273,7 @@ function drawReels(grid = makeGrid(), winningCells = [], breaking = false) {
       cell.className = `symbol symbol--${symbol.tone} ${
         isWinning ? "win" : ""
       } ${breaking && isWinning ? "breaking" : ""}`;
-      cell.textContent = symbol.icon;
+      cell.innerHTML = tileFace(symbol);
       reel.appendChild(cell);
     });
     el.reels.appendChild(reel);
