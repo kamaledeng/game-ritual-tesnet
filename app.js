@@ -320,6 +320,14 @@ function setBet(nextBet) {
   render();
 }
 
+function isConnectedToRitual() {
+  return Boolean(state.account) && state.chainId === RITUAL_CHAIN.chainId;
+}
+
+function canPlay() {
+  return isConnectedToRitual() && state.chips >= state.bet;
+}
+
 function render() {
   el.chips.textContent = state.chips.toLocaleString();
   el.remainingSpins.textContent = Math.floor(state.chips / state.bet).toLocaleString();
@@ -328,10 +336,10 @@ function render() {
   el.bestWin.textContent = state.bestWin.toLocaleString();
   el.ritualBalance.textContent = `${state.ritualBalance} RITUAL`;
   el.sideRitualBalance.textContent = `${state.ritualBalance} RITUAL`;
-  el.spinButton.disabled = state.spinning || state.chips < state.bet;
+  el.spinButton.disabled = state.spinning || !canPlay();
   el.autoSpinButton.textContent = state.autoSpinning ? `Stop ${state.autoRemaining}` : "Auto";
   el.autoSpinButton.classList.toggle("active", state.autoSpinning);
-  el.autoSpinButton.disabled = !state.autoSpinning && state.chips < state.bet;
+  el.autoSpinButton.disabled = !state.autoSpinning && !canPlay();
 
   if (!state.account) {
     el.networkStatus.textContent = "Not connected";
@@ -416,6 +424,12 @@ async function buyChips() {
 
 async function spin() {
   if (state.spinning) return;
+  if (!isConnectedToRitual()) {
+    stopAutoSpin();
+    log("Connect wallet ke Ritual testnet dulu sebelum spin.");
+    return;
+  }
+
   if (state.chips < state.bet) {
     stopAutoSpin();
     log("Chip tidak cukup. Beli chip dulu atau turunkan bet.");
@@ -506,6 +520,11 @@ function toggleAutoSpin() {
 
   if (state.chips < state.bet) {
     log("Chip tidak cukup untuk Auto Spin.");
+    return;
+  }
+
+  if (!isConnectedToRitual()) {
+    log("Connect wallet ke Ritual testnet dulu sebelum Auto Spin.");
     return;
   }
 
