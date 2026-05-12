@@ -1146,21 +1146,19 @@ async function spin() {
     }, spinDelay(1700));
   }
 
-  if (state.autoSpinning) {
-    if (state.autoRemaining <= 0) {
-      stopAutoSpin();
-      log("Auto Spin selesai.");
-    } else if (state.chips >= state.bet) {
-      // Continue auto spin
-      state.autoTimer = window.setTimeout(() => {
-        if (state.autoSpinning && state.autoRemaining > 0) {
-          spin();
-        }
-      }, 200);
-    } else {
-      stopAutoSpin();
-      log("Auto Spin berhenti karena chip tidak cukup.");
-    }
+  // Auto spin logic - simplified
+  if (state.autoSpinning && state.autoRemaining > 0) {
+    console.log(`Auto spin continuing, remaining: ${state.autoRemaining}`);
+    state.autoTimer = window.setTimeout(() => {
+      if (state.autoSpinning && state.autoRemaining > 0) {
+        console.log('Auto spin timer triggered');
+        spin();
+      }
+    }, 500); // Slower for testing
+  } else if (state.autoSpinning && state.autoRemaining <= 0) {
+    console.log('Auto spin completed');
+    stopAutoSpin();
+    log("Auto Spin selesai.");
   }
 }
 
@@ -1175,12 +1173,17 @@ function stopAutoSpin() {
 }
 
 function toggleAutoSpin() {
+  console.log('Auto spin button clicked');
+  
   if (state.autoSpinning) {
+    console.log('Stopping auto spin');
     stopAutoSpin();
     log("Auto Spin berhenti.");
     return;
   }
 
+  console.log('Starting auto spin');
+  
   if (state.chips < state.bet) {
     log("Chip tidak cukup untuk Auto Spin.");
     return;
@@ -1192,13 +1195,15 @@ function toggleAutoSpin() {
   }
 
   // Start auto spin
+  console.log('Setting auto spin state');
   state.autoSpinning = true;
   state.autoRemaining = state.selectedAutoSpins;
   log(`Auto Spin ${state.selectedAutoSpins} aktif.`);
   render();
   
   // Start first spin immediately
-  setTimeout(() => spin(), 100);
+  console.log('Starting first spin');
+  spin();
 }
 
 el.connectWallet.addEventListener("click", connectWallet);
