@@ -715,7 +715,7 @@ function drawReels(grid = makeGrid({ allowScatter: false }), winningCells = [], 
       } ${breaking && isWinning ? "breaking" : ""}`;
       if (landPop) {
         cell.classList.add("symbol--land-pop");
-        cell.style.setProperty("--sym-delay", `${rowIndex * 90 + columnIndex * 6}ms`);
+        cell.style.setProperty("--sym-delay", `${columnIndex * 140 + rowIndex * 18}ms`);
       }
       cell.innerHTML = tileFace(symbol);
       reel.appendChild(cell);
