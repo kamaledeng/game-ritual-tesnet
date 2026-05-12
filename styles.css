@@ -174,18 +174,19 @@ button:disabled {
   gap: 10px;
 }
 
-.avatar,
-.hud-icon {
+.avatar {
   width: 52px;
   height: 52px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 229, 166, 0.58);
-  border-radius: 50%;
-  background: linear-gradient(180deg, #f8d78a, #8d5b22 58%, #3a2412);
-  color: #fff0bd;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.34), inset 0 0 0 2px rgba(71, 42, 20, 0.55);
-  font-size: 1.35rem;
+  border: 1px solid rgba(66, 214, 155, 0.45);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #2ac28c, #0a6f53);
+  color: #fff;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.34),
+    0 0 22px rgba(66, 214, 155, 0.1),
+    inset 0 0 0 2px rgba(5, 41, 31, 0.25);
   text-decoration: none;
   transition:
     transform 140ms ease,
@@ -194,27 +195,20 @@ button:disabled {
     border-color 140ms ease;
 }
 
-.avatar:hover,
-.hud-icon:hover {
+.avatar:hover {
   transform: translateY(-1px);
   filter: brightness(1.08);
-  border-color: rgba(255, 236, 200, 0.75);
+  border-color: rgba(66, 214, 155, 0.75);
   box-shadow:
     0 14px 26px rgba(0, 0, 0, 0.38),
-    0 0 20px rgba(255, 220, 140, 0.12),
-    inset 0 0 0 2px rgba(71, 42, 20, 0.55);
+    0 0 24px rgba(66, 214, 155, 0.16),
+    inset 0 0 0 2px rgba(5, 41, 31, 0.25);
 }
 
 .avatar img {
-  width: 72%;
-  height: 72%;
+  width: 80%;
+  height: 80%;
   object-fit: contain;
-}
-
-.hud-icon {
-  border-radius: 14px;
-  background: linear-gradient(180deg, #31c190, #0a6f53);
-  color: #fff;
 }
 
 .coin-meter {
