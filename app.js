@@ -17,7 +17,13 @@ const bets = [10, 20, 50, 100, 250, 500];
 const autoSpinOptions = [10, 50, 100];
 const BOARD_COLUMNS = 5;
 const BOARD_ROWS = 4;
-const cascadeMultipliers = [1, 2, 3, 5];
+const baseCascadeMultipliers = [1, 2, 3, 5];
+const freeSpinCascadeMultipliers = [2, 3, 5, 8];
+const freeSpinAwards = {
+  3: 8,
+  4: 12,
+  5: 15,
+};
 const chipPackages = [
   { ritual: "0.01", chips: 1000 },
   { ritual: "0.05", chips: 6000 },
@@ -25,18 +31,19 @@ const chipPackages = [
 ];
 
 const symbols = [
-  { name: "char-1", suit: "character", rank: 1, pay: 3, tone: "red", mark: "一", suitMark: "萬" },
-  { name: "char-5", suit: "character", rank: 5, pay: 5, tone: "red", mark: "五", suitMark: "萬" },
-  { name: "char-8", suit: "character", rank: 8, pay: 7, tone: "red", mark: "八", suitMark: "萬" },
-  { name: "dot-2", suit: "dots", rank: 2, pay: 3, tone: "blue", mark: "2", suitMark: "筒" },
-  { name: "dot-5", suit: "dots", rank: 5, pay: 5, tone: "blue", mark: "5", suitMark: "筒" },
-  { name: "bamboo-3", suit: "bamboo", rank: 3, pay: 4, tone: "green", mark: "3", suitMark: "索" },
-  { name: "bamboo-6", suit: "bamboo", rank: 6, pay: 6, tone: "green", mark: "6", suitMark: "索" },
-  { name: "east", suit: "wind", rank: 0, pay: 8, tone: "blue", mark: "東", suitMark: "風" },
-  { name: "red-dragon", suit: "dragon", rank: 0, pay: 10, tone: "red", mark: "中", suitMark: "龍" },
-  { name: "green-dragon", suit: "dragon", rank: 0, pay: 12, tone: "green", mark: "發", suitMark: "龍" },
-  { name: "white-dragon", suit: "dragon", rank: 0, pay: 14, tone: "blue", mark: "白", suitMark: "龍" },
-  { name: "wild", suit: "wild", rank: 0, pay: 0, tone: "gold", mark: "百搭", suitMark: "WILD" },
+  { name: "char-1", suit: "character", rank: 1, pay: 3, tone: "red", mark: "\u4e00", suitMark: "\u842c" },
+  { name: "char-5", suit: "character", rank: 5, pay: 5, tone: "red", mark: "\u4e94", suitMark: "\u842c" },
+  { name: "char-8", suit: "character", rank: 8, pay: 7, tone: "red", mark: "\u516b", suitMark: "\u842c" },
+  { name: "dot-2", suit: "dots", rank: 2, pay: 3, tone: "blue", mark: "2", suitMark: "\u7b52" },
+  { name: "dot-5", suit: "dots", rank: 5, pay: 5, tone: "blue", mark: "5", suitMark: "\u7b52" },
+  { name: "bamboo-3", suit: "bamboo", rank: 3, pay: 4, tone: "green", mark: "3", suitMark: "\u7d22" },
+  { name: "bamboo-6", suit: "bamboo", rank: 6, pay: 6, tone: "green", mark: "6", suitMark: "\u7d22" },
+  { name: "east", suit: "wind", rank: 0, pay: 8, tone: "blue", mark: "\u6771", suitMark: "\u98a8" },
+  { name: "red-dragon", suit: "dragon", rank: 0, pay: 10, tone: "red", mark: "\u4e2d", suitMark: "\u9f8d" },
+  { name: "green-dragon", suit: "dragon", rank: 0, pay: 12, tone: "green", mark: "\u767c", suitMark: "\u9f8d" },
+  { name: "white-dragon", suit: "dragon", rank: 0, pay: 14, tone: "blue", mark: "\u767d", suitMark: "\u9f8d" },
+  { name: "wild", suit: "wild", rank: 0, pay: 0, tone: "gold", mark: "\u767e\u642d", suitMark: "WILD" },
+  { name: "gold-dragon-scatter", suit: "scatter", rank: 0, pay: 0, tone: "scatter", mark: "\u9f8d", suitMark: "BONUS", scatter: true },
 ];
 
 const saved = readSavedSettings();
@@ -55,6 +62,11 @@ const state = {
   autoRemaining: 0,
   autoTimer: null,
   deadStreak: 0,
+  freeSpinsRemaining: 0,
+  freeSpinsTotal: 0,
+  freeSpinWin: 0,
+  bonusActive: false,
+  lastFreeSpinBet: 0,
 };
 
 const el = {
@@ -64,6 +76,9 @@ const el = {
   connectWallet: document.querySelector("#connectWallet"),
   chips: document.querySelector("#chips"),
   remainingSpins: document.querySelector("#remainingSpins"),
+  freeSpinCounter: document.querySelector("#freeSpinCounter"),
+  bonusBanner: document.querySelector("#bonusBanner"),
+  bonusText: document.querySelector("#bonusText"),
   reels: document.querySelector("#reels"),
   resultText: document.querySelector("#resultText"),
   lastWin: document.querySelector("#lastWin"),
@@ -116,6 +131,15 @@ function resetWalletState() {
   state.spinCount = 0;
   state.bestWin = 0;
   state.ritualBalance = "0";
+  resetBonusState();
+}
+
+function resetBonusState() {
+  state.freeSpinsRemaining = 0;
+  state.freeSpinsTotal = 0;
+  state.freeSpinWin = 0;
+  state.bonusActive = false;
+  state.lastFreeSpinBet = 0;
 }
 
 function saveState() {
@@ -166,40 +190,53 @@ function log(message) {
   el.statusLog.textContent = message;
 }
 
-function randomSymbol() {
-  const roll = Math.random();
-  if (roll > 0.987) return symbols.find((symbol) => symbol.name === "wild");
-
-  const payingSymbols = symbols.filter((symbol) => symbol.pay > 0);
-  return payingSymbols[Math.floor(Math.random() * payingSymbols.length)];
-}
-
-function makeGrid() {
-  return Array.from({ length: BOARD_COLUMNS }, () =>
-    Array.from({ length: BOARD_ROWS }, () => randomSymbol()),
-  );
-}
-
 function cloneSymbol(symbol) {
   return { ...symbol };
 }
 
-function pickPayingSymbol() {
-  const payingSymbols = symbols.filter((symbol) => symbol.pay > 0);
-  return payingSymbols[Math.floor(Math.random() * payingSymbols.length)];
+function getSymbol(name) {
+  return symbols.find((symbol) => symbol.name === name);
 }
 
-function makeDeadGrid() {
+function payingSymbols() {
+  return symbols.filter((symbol) => symbol.pay > 0);
+}
+
+function randomSymbol(options = {}) {
+  const { bonus = false, allowScatter = true } = options;
+  const roll = Math.random();
+  const scatterChance = bonus ? 0.0035 : 0.006;
+  const wildChance = bonus ? 0.014 : 0.0085;
+
+  if (allowScatter && roll < scatterChance) return cloneSymbol(getSymbol("gold-dragon-scatter"));
+  if (roll < scatterChance + wildChance) return cloneSymbol(getSymbol("wild"));
+
+  const pool = payingSymbols();
+  return cloneSymbol(pool[Math.floor(Math.random() * pool.length)]);
+}
+
+function makeGrid(options = {}) {
+  return Array.from({ length: BOARD_COLUMNS }, () =>
+    Array.from({ length: BOARD_ROWS }, () => randomSymbol(options)),
+  );
+}
+
+function pickPayingSymbol() {
+  const pool = payingSymbols();
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function makeDeadGrid(options = {}) {
   for (let attempt = 0; attempt < 80; attempt += 1) {
-    const grid = makeGrid();
+    const grid = makeGrid(options);
     if (calculateWin(grid, 1).payout === 0) return grid;
   }
-  return makeGrid();
+  return makeGrid(options);
 }
 
-function makeNearMissGrid() {
+function makeNearMissGrid(options = {}) {
   for (let attempt = 0; attempt < 60; attempt += 1) {
-    const grid = makeGrid();
+    const grid = makeGrid(options);
     const matchSymbol = pickPayingSymbol();
 
     for (let column = 0; column < 2; column += 1) {
@@ -217,16 +254,29 @@ function makeNearMissGrid() {
     if (calculateWin(grid, 1).payout === 0) return grid;
   }
 
-  return makeDeadGrid();
+  return makeDeadGrid(options);
 }
 
 function randomNonMatchingSymbol(matchSymbol) {
-  const pool = symbols.filter((symbol) => symbol.name !== matchSymbol.name && symbol.name !== "wild");
+  const pool = symbols.filter(
+    (symbol) => symbol.name !== matchSymbol.name && symbol.name !== "wild" && !symbol.scatter,
+  );
   return cloneSymbol(pool[Math.floor(Math.random() * pool.length)]);
 }
 
-function chooseSpinTarget() {
+function chooseSpinTarget(options = {}) {
+  const { bonus = false } = options;
   const roll = Math.random();
+
+  if (!bonus && roll < 0.0065) return "bonus";
+
+  if (bonus) {
+    if (roll < 0.58) return "dead";
+    if (roll < 0.78) return "near";
+    if (roll < 0.925) return "small";
+    if (roll < 0.985) return "medium";
+    return "big";
+  }
 
   if (state.deadStreak >= 5) {
     if (roll < 0.42) return "dead";
@@ -251,14 +301,15 @@ function chooseSpinTarget() {
   return "big";
 }
 
-function buildSpinGrid() {
-  const target = chooseSpinTarget();
+function buildSpinGrid(options = {}) {
+  const target = chooseSpinTarget(options);
 
-  if (target === "dead") return makeDeadGrid();
-  if (target === "near") return makeNearMissGrid();
+  if (target === "dead") return makeDeadGrid(options);
+  if (target === "near") return makeNearMissGrid(options);
+  if (target === "bonus") return makeScatterTriggerGrid();
 
   const roll = Math.random();
-  const grid = makeGrid();
+  const grid = makeGrid(options);
   const matchSymbol = pickPayingSymbol();
   const matchReels =
     target === "small" ? 3 : target === "medium" ? (roll < 0.72 ? 3 : 4) : roll < 0.64 ? 4 : 5;
@@ -278,14 +329,28 @@ function buildSpinGrid() {
   }
 
   if (target === "big") {
-    const wild = symbols.find((symbol) => symbol.name === "wild");
-    const wildCount = Math.random() < 0.72 ? 1 : 2;
+    const wild = getSymbol("wild");
+    const wildCount = Math.random() < 0.74 ? 1 : 2;
     for (let count = 0; count < wildCount; count += 1) {
       grid[Math.floor(Math.random() * BOARD_COLUMNS)][Math.floor(Math.random() * BOARD_ROWS)] =
         cloneSymbol(wild);
     }
   }
 
+  return grid;
+}
+
+function makeScatterTriggerGrid() {
+  const grid = makeDeadGrid({ allowScatter: false });
+  const scatter = getSymbol("gold-dragon-scatter");
+  const positions = new Set();
+  while (positions.size < 3) {
+    positions.add(cellKey(Math.floor(Math.random() * BOARD_COLUMNS), Math.floor(Math.random() * BOARD_ROWS)));
+  }
+  positions.forEach((position) => {
+    const [column, row] = position.split("-").map(Number);
+    grid[column][row] = cloneSymbol(scatter);
+  });
   return grid;
 }
 
@@ -302,6 +367,14 @@ function makePips(symbol) {
 }
 
 function tileFace(symbol) {
+  if (symbol.suit === "scatter") {
+    return `
+      <span class="tile-corner">${symbol.suitMark}</span>
+      <span class="tile-main">${symbol.mark}</span>
+      <span class="tile-sub">FREE</span>
+    `;
+  }
+
   if (symbol.suit === "dots" || symbol.suit === "bamboo") {
     return `
       <span class="tile-corner">${symbol.rank}</span>
@@ -325,7 +398,7 @@ function tileFace(symbol) {
   `;
 }
 
-function drawReels(grid = makeGrid(), winningCells = [], breaking = false) {
+function drawReels(grid = makeGrid({ allowScatter: false }), winningCells = [], breaking = false) {
   const winningSet = new Set(winningCells);
   el.reels.innerHTML = "";
   grid.forEach((column, columnIndex) => {
@@ -344,27 +417,27 @@ function drawReels(grid = makeGrid(), winningCells = [], breaking = false) {
   });
 }
 
-function makeCascadeGrid(grid, winningCells) {
+function makeCascadeGrid(grid, winningCells, options = {}) {
   const winningSet = new Set(winningCells);
   return grid.map((column, columnIndex) => {
     const survivors = column.filter((_, rowIndex) => !winningSet.has(cellKey(columnIndex, rowIndex)));
-    const refill = Array.from({ length: BOARD_ROWS - survivors.length }, () => randomSymbol());
+    const refill = Array.from({ length: BOARD_ROWS - survivors.length }, () => randomSymbol(options));
     return [...refill, ...survivors];
   });
 }
 
-function makeControlledCascadeGrid(grid, winningCells, allowFollowUp) {
-  if (allowFollowUp) return makeCascadeGrid(grid, winningCells);
+function makeControlledCascadeGrid(grid, winningCells, allowFollowUp, options = {}) {
+  if (allowFollowUp) return makeCascadeGrid(grid, winningCells, options);
 
   for (let attempt = 0; attempt < 40; attempt += 1) {
-    const nextGrid = makeCascadeGrid(grid, winningCells);
+    const nextGrid = makeCascadeGrid(grid, winningCells, options);
     if (calculateWin(nextGrid, 1).payout === 0) return nextGrid;
   }
 
-  return makeDeadGrid();
+  return makeDeadGrid(options);
 }
 
-function calculateWin(grid, multiplier = 1) {
+function calculateWin(grid, multiplier = 1, betAmount = state.bet) {
   let payout = 0;
   const winningCells = new Set();
   for (const symbol of symbols) {
@@ -390,16 +463,36 @@ function calculateWin(grid, multiplier = 1) {
 
     if (streak >= 3) {
       cellsForSymbol.forEach((key) => winningCells.add(key));
-      payout += Math.max(1, Math.floor((state.bet * symbol.pay * ways * multiplier) / 8.8));
+      payout += Math.max(1, Math.floor((betAmount * symbol.pay * ways * multiplier) / 8.8));
     }
   }
 
   return { payout, winningCells: Array.from(winningCells) };
 }
 
-function renderMultiplier(activeIndex = -1) {
+function scatterCells(grid) {
+  const cells = [];
+  grid.forEach((column, columnIndex) => {
+    column.forEach((symbol, rowIndex) => {
+      if (symbol.scatter) cells.push(cellKey(columnIndex, rowIndex));
+    });
+  });
+  return cells;
+}
+
+function scatterAward(scatterCount) {
+  if (scatterCount >= 5) return freeSpinAwards[5];
+  if (scatterCount >= 4) return freeSpinAwards[4];
+  if (scatterCount >= 3) return freeSpinAwards[3];
+  return 0;
+}
+
+function renderMultiplier(activeIndex = -1, bonus = state.bonusActive) {
+  const multipliers = bonus ? freeSpinCascadeMultipliers : baseCascadeMultipliers;
   el.multiplierSteps.forEach((step, index) => {
+    step.textContent = `x${multipliers[index]}`;
     step.classList.toggle("active", index === activeIndex);
+    step.classList.toggle("bonus", bonus);
   });
 }
 
@@ -408,6 +501,20 @@ function flashChipDeduction() {
   window.requestAnimationFrame(() => {
     el.chips.classList.add("deducting");
   });
+}
+
+function showBonusBanner(message) {
+  el.bonusText.textContent = message;
+  el.bonusBanner.hidden = false;
+  el.bonusBanner.classList.remove("show");
+  window.requestAnimationFrame(() => {
+    el.bonusBanner.classList.add("show");
+  });
+}
+
+function hideBonusBanner() {
+  el.bonusBanner.classList.remove("show");
+  el.bonusBanner.hidden = true;
 }
 
 function renderPackages() {
@@ -449,7 +556,7 @@ function renderAutoOptions() {
     button.type = "button";
     button.className = `auto-option ${count === state.selectedAutoSpins ? "active" : ""}`;
     button.textContent = `Auto ${count}`;
-    button.disabled = state.autoSpinning;
+    button.disabled = state.autoSpinning || state.bonusActive;
     button.addEventListener("click", () => {
       state.selectedAutoSpins = count;
       render();
@@ -468,13 +575,18 @@ function isConnectedToRitual() {
   return Boolean(state.account) && state.chainId === RITUAL_CHAIN.chainId;
 }
 
+function hasActiveFreeSpin() {
+  return state.freeSpinsRemaining > 0;
+}
+
 function canPlay() {
-  return isConnectedToRitual() && state.chips >= state.bet;
+  return isConnectedToRitual() && (state.chips >= state.bet || hasActiveFreeSpin());
 }
 
 function render() {
   el.chips.textContent = state.chips.toLocaleString();
   el.remainingSpins.textContent = Math.floor(state.chips / state.bet).toLocaleString();
+  el.freeSpinCounter.textContent = state.freeSpinsRemaining.toLocaleString();
   el.betLabel.textContent = state.bet.toLocaleString();
   el.spinCount.textContent = state.spinCount.toLocaleString();
   el.bestWin.textContent = state.bestWin.toLocaleString();
@@ -483,7 +595,7 @@ function render() {
   el.spinButton.disabled = state.spinning || !canPlay();
   el.autoSpinButton.textContent = state.autoSpinning ? `Stop ${state.autoRemaining}` : "Auto";
   el.autoSpinButton.classList.toggle("active", state.autoSpinning);
-  el.autoSpinButton.disabled = !state.autoSpinning && !canPlay();
+  el.autoSpinButton.disabled = (!state.autoSpinning && !canPlay()) || state.bonusActive;
 
   if (!state.account) {
     el.networkStatus.textContent = "Not connected";
@@ -575,69 +687,137 @@ async function spin() {
     return;
   }
 
-  if (state.chips < state.bet) {
+  const isFreeSpin = hasActiveFreeSpin();
+  const spinBet = isFreeSpin ? state.lastFreeSpinBet || state.bet : state.bet;
+
+  if (!isFreeSpin && state.chips < state.bet) {
     stopAutoSpin();
     log("Chip tidak cukup. Beli chip dulu atau turunkan bet.");
     return;
   }
 
   state.spinning = true;
-  if (state.autoSpinning) state.autoRemaining = Math.max(0, state.autoRemaining - 1);
-  state.chips -= state.bet;
-  state.spinCount += 1;
+  if (state.autoSpinning && !isFreeSpin) state.autoRemaining = Math.max(0, state.autoRemaining - 1);
+
+  if (isFreeSpin) {
+    state.freeSpinsRemaining -= 1;
+    el.resultText.textContent = `Free Spin ${state.freeSpinsTotal - state.freeSpinsRemaining}/${state.freeSpinsTotal}.`;
+    showBonusBanner(`${state.freeSpinsRemaining} free spin tersisa. Multiplier bonus aktif.`);
+  } else {
+    state.chips -= state.bet;
+    state.spinCount += 1;
+    el.resultText.textContent = `Bet -${state.bet.toLocaleString()} chips. Reels spinning...`;
+    flashChipDeduction();
+  }
+
   el.lastWin.textContent = "0";
-  el.resultText.textContent = `Bet -${state.bet.toLocaleString()} chips. Reels spinning...`;
   el.reels.classList.add("spinning");
-  flashChipDeduction();
   saveState();
   render();
 
-  await new Promise((resolve) => setTimeout(resolve, 520));
-  el.resultText.textContent = "Almost there...";
-  await new Promise((resolve) => setTimeout(resolve, 460));
+  await new Promise((resolve) => setTimeout(resolve, isFreeSpin ? 640 : 520));
+  el.resultText.textContent = isFreeSpin ? "Golden reels charging..." : "Almost there...";
+  await new Promise((resolve) => setTimeout(resolve, isFreeSpin ? 560 : 460));
 
-  let grid = buildSpinGrid();
+  let grid = buildSpinGrid({ bonus: isFreeSpin, allowScatter: true });
   let totalPayout = 0;
   let cascadeIndex = 0;
+  const multipliers = isFreeSpin ? freeSpinCascadeMultipliers : baseCascadeMultipliers;
+  const scatterMatches = scatterCells(grid);
+  const award = scatterAward(scatterMatches.length);
 
-  drawReels(grid);
+  drawReels(grid, award > 0 ? scatterMatches : []);
   el.reels.classList.remove("spinning");
 
-  while (cascadeIndex < cascadeMultipliers.length) {
-    const multiplier = cascadeMultipliers[cascadeIndex];
-    const { payout, winningCells } = calculateWin(grid, multiplier);
+  if (award > 0) {
+    await new Promise((resolve) => setTimeout(resolve, 420));
+    if (isFreeSpin) {
+      const retrigger = Math.min(5, Math.ceil(award / 3));
+      state.freeSpinsRemaining += retrigger;
+      state.freeSpinsTotal += retrigger;
+      showBonusBanner(`Retrigger +${retrigger} free spins dari Golden Dragon scatter.`);
+      log(`Bonus retrigger +${retrigger} free spins.`);
+    } else {
+      state.freeSpinsRemaining += award;
+      state.freeSpinsTotal = award;
+      state.freeSpinWin = 0;
+      state.bonusActive = true;
+      state.lastFreeSpinBet = spinBet;
+      showBonusBanner(`${scatterMatches.length} Golden Dragon scatter: ${award} free spins unlocked.`);
+      log(`${award} Free Spins aktif. Spin gratis memakai bet ${spinBet.toLocaleString()} chips.`);
+    }
+    render();
+    await new Promise((resolve) => setTimeout(resolve, 760));
+  }
+
+  while (cascadeIndex < multipliers.length) {
+    const multiplier = multipliers[cascadeIndex];
+    const { payout, winningCells } = calculateWin(grid, multiplier, spinBet);
     if (payout <= 0 || winningCells.length === 0) break;
 
-    renderMultiplier(cascadeIndex);
+    renderMultiplier(cascadeIndex, isFreeSpin);
     totalPayout += payout;
+    if (isFreeSpin) state.freeSpinWin += payout;
     el.lastWin.textContent = totalPayout.toLocaleString();
-    el.resultText.textContent = `Win x${multiplier}: ${payout.toLocaleString()} chips.`;
+    el.resultText.textContent = `${isFreeSpin ? "Bonus " : ""}Win x${multiplier}: ${payout.toLocaleString()} chips.`;
     drawReels(grid, winningCells);
-    await new Promise((resolve) => setTimeout(resolve, 360));
+    await new Promise((resolve) => setTimeout(resolve, isFreeSpin ? 440 : 360));
     drawReels(grid, winningCells, true);
     el.resultText.textContent = `Pecah x${multiplier}, cascade lanjut...`;
-    await new Promise((resolve) => setTimeout(resolve, 430));
-    const followUpChance = cascadeIndex === 0 ? 0.055 : cascadeIndex === 1 ? 0.022 : 0.008;
-    grid = makeControlledCascadeGrid(grid, winningCells, Math.random() < followUpChance);
+    await new Promise((resolve) => setTimeout(resolve, isFreeSpin ? 520 : 430));
+    const followUpChance = isFreeSpin
+      ? cascadeIndex === 0
+        ? 0.075
+        : cascadeIndex === 1
+          ? 0.032
+          : 0.012
+      : cascadeIndex === 0
+        ? 0.055
+        : cascadeIndex === 1
+          ? 0.022
+          : 0.008;
+    grid = makeControlledCascadeGrid(grid, winningCells, Math.random() < followUpChance, {
+      bonus: isFreeSpin,
+      allowScatter: isFreeSpin,
+    });
     drawReels(grid);
-    await new Promise((resolve) => setTimeout(resolve, 260));
+    await new Promise((resolve) => setTimeout(resolve, isFreeSpin ? 340 : 260));
     cascadeIndex += 1;
   }
 
   state.chips += totalPayout;
   state.bestWin = Math.max(state.bestWin, totalPayout);
-  state.deadStreak = totalPayout > 0 ? 0 : state.deadStreak + 1;
+  state.deadStreak = totalPayout > 0 || award > 0 ? 0 : state.deadStreak + 1;
   state.spinning = false;
   el.lastWin.textContent = totalPayout.toLocaleString();
   el.resultText.textContent =
     totalPayout > 0
-      ? `Total menang ${totalPayout.toLocaleString()} chips.`
-      : state.deadStreak >= 3
-        ? "Dead spin. Momentum sedang dingin."
-        : "Near miss. Coba spin lagi.";
-  renderMultiplier(-1);
+      ? `${isFreeSpin ? "Bonus total" : "Total menang"} ${totalPayout.toLocaleString()} chips.`
+      : award > 0
+        ? "Bonus siap. Free spins dimulai otomatis."
+        : state.deadStreak >= 3
+          ? "Dead spin. Momentum sedang dingin."
+          : "Near miss. Coba spin lagi.";
+  renderMultiplier(-1, hasActiveFreeSpin());
   saveState();
   render();
+
+  if (state.freeSpinsRemaining > 0) {
+    state.autoTimer = window.setTimeout(spin, 1050);
+    return;
+  }
+
+  if (state.bonusActive) {
+    const bonusWin = state.freeSpinWin;
+    showBonusBanner(`Bonus selesai. Total bonus win ${bonusWin.toLocaleString()} chips.`);
+    log(`Free Spins selesai. Total bonus win ${bonusWin.toLocaleString()} chips.`);
+    resetBonusState();
+    window.setTimeout(() => {
+      hideBonusBanner();
+      renderMultiplier(-1, false);
+      render();
+    }, 1600);
+  }
 
   if (state.autoSpinning) {
     if (state.autoRemaining <= 0) {
@@ -676,6 +856,11 @@ function toggleAutoSpin() {
 
   if (!isConnectedToRitual()) {
     log("Connect wallet ke Ritual testnet dulu sebelum Auto Spin.");
+    return;
+  }
+
+  if (state.bonusActive) {
+    log("Auto Spin menunggu bonus round selesai.");
     return;
   }
 
