@@ -154,6 +154,7 @@ const el = {
   autoSpinButton: document.querySelector("#autoSpinButton"),
   maxBetButton: document.querySelector("#maxBetButton"),
   buyBonusButton: document.querySelector("#buyBonusButton"),
+  buyBonusPrice: document.querySelector("#buyBonusPrice"),
   packageList: document.querySelector("#packageList"),
   buyChipsButton: document.querySelector("#buyChipsButton"),
   spinCount: document.querySelector("#spinCount"),
@@ -1055,8 +1056,9 @@ function render() {
   el.maxBetButton.disabled = locked;
   if (el.buyBonusButton) {
     el.buyBonusButton.disabled = !canBuyBonus();
-    el.buyBonusButton.title = `Buy Free Spins (${BUY_BONUS_FREE_SPINS}) for ${bonusPrice.toLocaleString()} chips`;
+    el.buyBonusButton.title = `Buy Free Spins (${BUY_BONUS_FREE_SPINS}) for ${bonusPrice.toLocaleString()} chips (${BUY_BONUS_MULTIPLIER}x bet)`;
   }
+  if (el.buyBonusPrice) el.buyBonusPrice.textContent = bonusPrice.toLocaleString();
   document.querySelectorAll(".speed-btn").forEach((btn) => {
     const on = btn.dataset.speed === state.spinSpeed;
     btn.classList.toggle("active", on);
