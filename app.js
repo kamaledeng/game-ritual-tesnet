@@ -10,61 +10,83 @@ const RITUAL_CHAIN = {
   blockExplorerUrls: ["https://explorer.ritualfoundation.org"],
 };
 
-const themes = [
-  ["Olympus Gates", "myth reels", "⚡"],
-  ["Candy Orbit", "cluster sweets", "🍬"],
-  ["Star Princess", "royal cosmic", "✨"],
-  ["Mahjong River", "tile match", "🀄"],
-  ["Frontier Gold", "western rush", "🤠"],
-  ["Sugar Sprint", "candy chain", "🍭"],
-  ["Bonanza Vault", "gold cascade", "💰"],
-  ["Sun Temple Gems", "ancient shine", "🔶"],
-  ["Lucky Mooncat", "charm reels", "🐱"],
-  ["Aztec Treasure Run", "temple hunt", "🗿"],
-  ["Sky Kings Duel", "storm clash", "🌩️"],
-  ["Dragon Hatchery", "egg bonus", "🐉"],
-  ["Guard House", "kennel luck", "🏠"],
-  ["Fruit Fiesta", "juicy party", "🍓"],
-  ["Prairie Crown", "buffalo trail", "👑"],
-  ["Serpent Queen", "stone gaze", "🐍"],
-  ["Clover Riches", "green luck", "☘️"],
-  ["Pirate Ledger", "sea gold", "🏴‍☠️"],
-  ["Jester Jewels", "classic shine", "🃏"],
-  ["Rhino Charge", "savanna reels", "🦏"],
+const OWNER_ADDRESS = "0xcf3da8d27bc354c8beb13a98205043e5c0967232";
+const STORAGE_KEY = "bonanza-fruit-ritual-state-v1";
+const bets = [10, 20, 50, 100, 250, 500];
+const chipPackages = [
+  { ritual: "0.01", chips: 1000 },
+  { ritual: "0.05", chips: 6000 },
+  { ritual: "0.1", chips: 15000 },
 ];
 
-const symbols = ["⚡", "🍬", "✨", "🀄", "💰", "🔶", "🐉", "🍓", "👑", "🃏"];
+const symbols = [
+  { icon: "🍌", name: "banana", pay: 3 },
+  { icon: "🍇", name: "grape", pay: 4 },
+  { icon: "🍓", name: "strawberry", pay: 5 },
+  { icon: "🍉", name: "melon", pay: 6 },
+  { icon: "🍍", name: "pineapple", pay: 8 },
+  { icon: "💎", name: "diamond", pay: 12 },
+  { icon: "🍭", name: "scatter", pay: 0 },
+];
 
+const saved = readSavedState();
 const state = {
   account: "",
   chainId: "",
-  credits: 1000,
-  bet: 20,
-  selectedTheme: themes[0],
-  spinCount: 0,
-  bestWin: 0,
-  lastSpin: null,
+  chips: saved.chips,
+  bet: saved.bet,
+  selectedPackage: chipPackages[0],
+  spinCount: saved.spinCount,
+  bestWin: saved.bestWin,
+  spinning: false,
 };
 
 const el = {
-  themeList: document.querySelector("#themeList"),
-  themeCount: document.querySelector("#themeCount"),
-  selectedTheme: document.querySelector("#selectedTheme"),
-  selectedProvider: document.querySelector("#selectedProvider"),
+  networkStatus: document.querySelector("#networkStatus"),
+  connectWallet: document.querySelector("#connectWallet"),
+  chips: document.querySelector("#chips"),
   reels: document.querySelector("#reels"),
   resultText: document.querySelector("#resultText"),
   lastWin: document.querySelector("#lastWin"),
-  credits: document.querySelector("#credits"),
+  betLabel: document.querySelector("#betLabel"),
+  decreaseBet: document.querySelector("#decreaseBet"),
+  increaseBet: document.querySelector("#increaseBet"),
+  quickBets: document.querySelector("#quickBets"),
+  spinButton: document.querySelector("#spinButton"),
+  maxBetButton: document.querySelector("#maxBetButton"),
+  packageList: document.querySelector("#packageList"),
+  buyChipsButton: document.querySelector("#buyChipsButton"),
+  ownerAddress: document.querySelector("#ownerAddress"),
   spinCount: document.querySelector("#spinCount"),
   bestWin: document.querySelector("#bestWin"),
-  betAmount: document.querySelector("#betAmount"),
-  betLabel: document.querySelector("#betLabel"),
-  spinButton: document.querySelector("#spinButton"),
-  recordButton: document.querySelector("#recordButton"),
-  connectWallet: document.querySelector("#connectWallet"),
-  networkStatus: document.querySelector("#networkStatus"),
   statusLog: document.querySelector("#statusLog"),
 };
+
+function readSavedState() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    return {
+      chips: Number(parsed.chips || 0),
+      bet: bets.includes(Number(parsed.bet)) ? Number(parsed.bet) : 20,
+      spinCount: Number(parsed.spinCount || 0),
+      bestWin: Number(parsed.bestWin || 0),
+    };
+  } catch {
+    return { chips: 0, bet: 20, spinCount: 0, bestWin: 0 };
+  }
+}
+
+function saveState() {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      chips: state.chips,
+      bet: state.bet,
+      spinCount: state.spinCount,
+      bestWin: state.bestWin,
+    }),
+  );
+}
 
 function shortAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -74,49 +96,23 @@ function log(message) {
   el.statusLog.textContent = message;
 }
 
-function drawThemes() {
-  el.themeCount.textContent = themes.length;
-  el.themeList.innerHTML = "";
-
-  themes.forEach((theme) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `theme-card ${theme[0] === state.selectedTheme[0] ? "active" : ""}`;
-    button.innerHTML = `
-      <span class="theme-icon">${theme[2]}</span>
-      <span>
-        <span class="theme-name">${theme[0]}</span>
-        <span class="theme-note">${theme[1]}</span>
-      </span>
-    `;
-    button.addEventListener("click", () => {
-      state.selectedTheme = theme;
-      el.selectedTheme.textContent = theme[0];
-      el.selectedProvider.textContent = theme[1];
-      drawThemes();
-      log(`${theme[0]} selected.`);
-    });
-    el.themeList.appendChild(button);
-  });
-}
-
 function randomSymbol() {
   return symbols[Math.floor(Math.random() * symbols.length)];
 }
 
-function drawReels(grid = null, winningRows = []) {
-  const nextGrid =
-    grid ||
-    Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => randomSymbol()));
+function makeGrid() {
+  return Array.from({ length: 6 }, () => Array.from({ length: 5 }, () => randomSymbol()));
+}
 
+function drawReels(grid = makeGrid(), winningNames = []) {
   el.reels.innerHTML = "";
-  nextGrid.forEach((column) => {
+  grid.forEach((column) => {
     const reel = document.createElement("div");
     reel.className = "reel";
-    column.forEach((symbol, rowIndex) => {
+    column.forEach((symbol) => {
       const cell = document.createElement("div");
-      cell.className = `symbol ${winningRows.includes(rowIndex) ? "win" : ""}`;
-      cell.textContent = symbol;
+      cell.className = `symbol ${winningNames.includes(symbol.name) ? "win" : ""}`;
+      cell.textContent = symbol.icon;
       reel.appendChild(cell);
     });
     el.reels.appendChild(reel);
@@ -124,81 +120,84 @@ function drawReels(grid = null, winningRows = []) {
 }
 
 function calculateWin(grid) {
-  const rows = [0, 1, 2];
+  const counts = {};
+  for (const symbol of grid.flat()) {
+    if (symbol.pay > 0) counts[symbol.name] = (counts[symbol.name] || 0) + 1;
+  }
+
   let payout = 0;
-  const winningRows = [];
-
-  rows.forEach((row) => {
-    const rowSymbols = grid.map((column) => column[row]);
-    const counts = rowSymbols.reduce((acc, symbol) => {
-      acc[symbol] = (acc[symbol] || 0) + 1;
-      return acc;
-    }, {});
-    const bestCount = Math.max(...Object.values(counts));
-
-    if (bestCount >= 3) {
-      winningRows.push(row);
-      payout += state.bet * (bestCount - 2) * (row === 1 ? 3 : 2);
+  const winningNames = [];
+  for (const symbol of symbols) {
+    const count = counts[symbol.name] || 0;
+    if (symbol.pay > 0 && count >= 8) {
+      winningNames.push(symbol.name);
+      payout += state.bet * symbol.pay * Math.floor(count / 3);
     }
+  }
+
+  const scatters = grid.flat().filter((symbol) => symbol.name === "scatter").length;
+  if (scatters >= 4) {
+    payout += state.bet * scatters * 4;
+    winningNames.push("scatter");
+  }
+
+  return { payout, winningNames };
+}
+
+function renderPackages() {
+  el.packageList.innerHTML = "";
+  chipPackages.forEach((pack) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `package-card ${
+      pack.ritual === state.selectedPackage.ritual ? "active" : ""
+    }`;
+    button.innerHTML = `
+      <span>${pack.ritual} RITUAL</span>
+      <strong>${pack.chips.toLocaleString()} chips</strong>
+    `;
+    button.addEventListener("click", () => {
+      state.selectedPackage = pack;
+      renderPackages();
+    });
+    el.packageList.appendChild(button);
   });
-
-  if (grid.flat().filter((symbol) => symbol === state.selectedTheme[2]).length >= 4) {
-    payout += state.bet * 5;
-  }
-
-  return { payout, winningRows };
 }
 
-async function spin() {
-  if (state.credits < state.bet) {
-    log("Demo credit tidak cukup. Turunkan bet atau refresh session.");
-    return;
-  }
-
-  state.credits -= state.bet;
-  state.spinCount += 1;
-  state.lastSpin = null;
-  el.recordButton.disabled = true;
-  el.reels.classList.add("spinning");
-  el.spinButton.disabled = true;
-  el.resultText.textContent = "Spinning...";
-  renderStats();
-
-  await new Promise((resolve) => setTimeout(resolve, 650));
-
-  const grid = Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => randomSymbol()));
-  const { payout, winningRows } = calculateWin(grid);
-  state.credits += payout;
-  state.bestWin = Math.max(state.bestWin, payout);
-  state.lastSpin = {
-    theme: state.selectedTheme[0],
-    bet: state.bet,
-    payout,
-    at: new Date().toISOString(),
-  };
-
-  drawReels(grid, winningRows);
-  el.reels.classList.remove("spinning");
-  el.spinButton.disabled = false;
-  el.recordButton.disabled = !state.account;
-  el.resultText.textContent = payout > 0 ? "Win recorded in session." : "No win this spin.";
-  el.lastWin.textContent = payout;
-  renderStats();
+function renderBets() {
+  el.quickBets.innerHTML = "";
+  bets.forEach((bet) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `quick-bet ${bet === state.bet ? "active" : ""}`;
+    button.textContent = bet;
+    button.addEventListener("click", () => setBet(bet));
+    el.quickBets.appendChild(button);
+  });
 }
 
-function renderStats() {
-  el.credits.textContent = state.credits;
-  el.spinCount.textContent = state.spinCount;
-  el.bestWin.textContent = state.bestWin;
-  el.betLabel.textContent = state.bet;
+function setBet(nextBet) {
+  state.bet = Math.max(bets[0], Math.min(bets[bets.length - 1], nextBet));
+  saveState();
+  render();
+}
+
+function render() {
+  el.chips.textContent = state.chips.toLocaleString();
+  el.betLabel.textContent = state.bet.toLocaleString();
+  el.spinCount.textContent = state.spinCount.toLocaleString();
+  el.bestWin.textContent = state.bestWin.toLocaleString();
+  el.spinButton.disabled = state.spinning || state.chips < state.bet;
+  el.ownerAddress.textContent = OWNER_ADDRESS;
 
   if (!state.account) {
     el.networkStatus.textContent = "Not connected";
-    return;
+  } else {
+    const chainLabel = state.chainId === RITUAL_CHAIN.chainId ? "Ritual" : `Chain ${state.chainId}`;
+    el.networkStatus.textContent = `${chainLabel} · ${shortAddress(state.account)}`;
   }
 
-  const chainLabel = state.chainId === RITUAL_CHAIN.chainId ? "Ritual" : `Chain ${state.chainId}`;
-  el.networkStatus.textContent = `${chainLabel} · ${shortAddress(state.account)}`;
+  renderBets();
 }
 
 async function ensureRitualChain() {
@@ -226,66 +225,105 @@ async function connectWallet() {
     const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
     state.account = accounts[0] || "";
     state.chainId = await window.ethereum.request({ method: "eth_chainId" });
-    el.recordButton.disabled = !state.lastSpin;
-    renderStats();
-    log("Wallet connected to Ritual testnet.");
+    render();
+    log("Wallet connected. Kamu bisa beli chip dengan RITUAL testnet.");
   } catch (error) {
     log(error.message || "Wallet connection failed.");
   }
 }
 
-function encodeMemo(payload) {
-  const json = JSON.stringify(payload);
-  return `0x${Array.from(new TextEncoder().encode(json))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("")}`;
+function ritualToWeiHex(amount) {
+  const [whole, fraction = ""] = amount.split(".");
+  const wei = BigInt(whole || "0") * 10n ** 18n + BigInt((fraction + "0".repeat(18)).slice(0, 18));
+  return `0x${wei.toString(16)}`;
 }
 
-async function recordOnChain() {
-  if (!state.lastSpin || !state.account) return;
-
+async function buyChips() {
   try {
+    if (!state.account) await connectWallet();
+    if (!state.account) return;
+
     await ensureRitualChain();
+    log(`Confirm payment ${state.selectedPackage.ritual} RITUAL testnet in wallet.`);
+
     const txHash = await window.ethereum.request({
       method: "eth_sendTransaction",
       params: [
         {
           from: state.account,
-          to: state.account,
-          value: "0x0",
-          data: encodeMemo({
-            app: "ritual-arcade-slots",
-            ...state.lastSpin,
-          }),
+          to: OWNER_ADDRESS,
+          value: ritualToWeiHex(state.selectedPackage.ritual),
         },
       ],
     });
-    log(`Spin memo sent: ${txHash}`);
+
+    state.chips += state.selectedPackage.chips;
+    saveState();
+    render();
+    log(`Payment sent. Added ${state.selectedPackage.chips.toLocaleString()} chips. Tx: ${txHash}`);
   } catch (error) {
-    log(error.message || "On-chain record failed.");
+    log(error.message || "Payment failed.");
   }
 }
 
-el.betAmount.addEventListener("input", (event) => {
-  state.bet = Number(event.target.value);
-  renderStats();
-});
+async function spin() {
+  if (state.spinning) return;
+  if (state.chips < state.bet) {
+    log("Chip tidak cukup. Beli chip dulu atau turunkan bet.");
+    return;
+  }
 
-el.spinButton.addEventListener("click", spin);
+  state.spinning = true;
+  state.chips -= state.bet;
+  state.spinCount += 1;
+  el.lastWin.textContent = "0";
+  el.resultText.textContent = "Spinning...";
+  el.reels.classList.add("spinning");
+  saveState();
+  render();
+
+  await new Promise((resolve) => setTimeout(resolve, 750));
+
+  const grid = makeGrid();
+  const { payout, winningNames } = calculateWin(grid);
+  state.chips += payout;
+  state.bestWin = Math.max(state.bestWin, payout);
+  state.spinning = false;
+
+  drawReels(grid, winningNames);
+  el.reels.classList.remove("spinning");
+  el.lastWin.textContent = payout.toLocaleString();
+  el.resultText.textContent =
+    payout > 0 ? `Win ${payout.toLocaleString()} chips.` : "Belum menang, coba spin lagi.";
+
+  saveState();
+  render();
+}
+
 el.connectWallet.addEventListener("click", connectWallet);
-el.recordButton.addEventListener("click", recordOnChain);
+el.buyChipsButton.addEventListener("click", buyChips);
+el.spinButton.addEventListener("click", spin);
+el.maxBetButton.addEventListener("click", () => setBet(bets[bets.length - 1]));
+el.decreaseBet.addEventListener("click", () => {
+  const index = Math.max(0, bets.indexOf(state.bet) - 1);
+  setBet(bets[index]);
+});
+el.increaseBet.addEventListener("click", () => {
+  const index = Math.min(bets.length - 1, bets.indexOf(state.bet) + 1);
+  setBet(bets[index]);
+});
 
 if (window.ethereum) {
   window.ethereum.on?.("accountsChanged", ([account]) => {
     state.account = account || "";
-    renderStats();
+    render();
   });
   window.ethereum.on?.("chainChanged", (chainId) => {
     state.chainId = chainId;
-    renderStats();
+    render();
   });
 }
 
-drawThemes();
+renderPackages();
 drawReels();
-renderStats();
+render();

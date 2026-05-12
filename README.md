@@ -1,13 +1,15 @@
-# Ritual Arcade Slots
+# Bonanza Fruit Ritual
 
-Static slot-style demo game for Ritual testnet. The game uses original themes inspired by popular slot categories and does not include third-party game assets.
+Static fruit slot-style game for Ritual testnet. Players buy demo chips by sending Ritual testnet tokens to the configured owner address, then use those chips to spin.
 
 ## Features
 
-- 20 original slot-style themes
-- Demo credit and bet controls
+- One fruit slot game: Bonanza Fruit
+- Chip cashier using Ritual testnet wallet transactions
+- Owner payment address: `0xcf3da8d27bc354c8beb13a98205043e5c0967232`
+- Quick bet controls: `10`, `20`, `50`, `100`, `250`, `500`
+- 6x5 fruit reels with cluster-style payouts
 - Wallet connect with Ritual testnet chain config
-- Optional on-chain spin memo using a zero-value self transaction
 - Static deployment path for GitHub and Vercel
 
 ## Ritual Testnet
@@ -22,6 +24,12 @@ Static slot-style demo game for Ritual testnet. The game uses original themes in
 
 Open `index.html` directly in a browser, or serve the folder with any static server.
 
+To test the Vercel build output locally:
+
+```bash
+npm run build
+```
+
 ## Deploy to Vercel via GitHub
 
 1. Push this folder to a GitHub repository.
@@ -32,4 +40,4 @@ Open `index.html` directly in a browser, or serve the folder with any static ser
 
 ## Notes
 
-This is a demo game using session credits only. For a production game, add a smart contract, provable randomness, anti-abuse controls, legal review, and jurisdiction-specific compliance before using any real value.
+This is a Ritual testnet demo game. For production or any real-value game, add a smart contract, receipt verification, provable randomness, anti-abuse controls, legal review, and jurisdiction-specific compliance.

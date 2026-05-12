@@ -5,84 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Ritual Arcade Slots, demo slot-style game for Ritual testnet."
+      content="Bonanza Fruit, slot-style Ritual testnet chip game."
     />
-    <title>Ritual Arcade Slots</title>
+    <title>Bonanza Fruit Ritual</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="app-shell">
-      <section class="play-surface" aria-label="Ritual Arcade Slots">
+      <section class="play-surface" aria-label="Bonanza Fruit Ritual">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Ritual Testnet</p>
-            <h1>Ritual Arcade Slots</h1>
+            <p class="eyebrow">Ritual Testnet Slot</p>
+            <h1>Bonanza Fruit</h1>
           </div>
           <div class="wallet-panel">
             <div class="network-pill" id="networkStatus">Not connected</div>
-            <button class="icon-button" id="connectWallet" type="button" title="Connect wallet">
-              Connect
-            </button>
+            <button class="secondary-button" id="connectWallet" type="button">Connect Wallet</button>
           </div>
         </header>
 
         <div class="game-layout">
-          <aside class="theme-rail" aria-label="Theme list">
-            <div class="theme-rail__header">
-              <span>Theme</span>
-              <strong id="themeCount">20</strong>
-            </div>
-            <div class="theme-list" id="themeList"></div>
-          </aside>
-
-          <section class="machine" aria-label="Slot machine">
+          <section class="machine" aria-label="Fruit slot machine">
             <div class="machine__header">
               <div>
-                <p id="selectedProvider">Original demo</p>
-                <h2 id="selectedTheme">Olympus Gates</h2>
+                <p>Cluster pays demo</p>
+                <h2>Sweet Fruit Reels</h2>
               </div>
               <div class="balance-box">
-                <span>Demo Credit</span>
-                <strong id="credits">1000</strong>
+                <span>Chip Balance</span>
+                <strong id="chips">0</strong>
               </div>
             </div>
 
             <div class="reels" id="reels" aria-live="polite"></div>
 
             <div class="result-strip">
-              <span id="resultText">Pilih tema, atur bet, lalu spin.</span>
+              <span id="resultText">Beli chip dengan RITUAL testnet untuk mulai spin.</span>
               <strong id="lastWin">0</strong>
             </div>
 
-            <div class="controls">
-              <label class="bet-control" for="betAmount">
+            <div class="bet-strip" aria-label="Bet controls">
+              <button class="step-button" id="decreaseBet" type="button">-</button>
+              <div class="bet-readout">
                 <span>Bet</span>
-                <input id="betAmount" type="range" min="10" max="100" step="10" value="20" />
                 <strong id="betLabel">20</strong>
-              </label>
+              </div>
+              <button class="step-button" id="increaseBet" type="button">+</button>
+              <div class="quick-bets" id="quickBets"></div>
+            </div>
+
+            <div class="spin-row">
               <button class="primary-button" id="spinButton" type="button">Spin</button>
-              <button class="secondary-button" id="recordButton" type="button" disabled>
-                Record On-Chain
-              </button>
+              <button class="secondary-button" id="maxBetButton" type="button">Max Bet</button>
             </div>
           </section>
 
-          <aside class="stats-panel" aria-label="Stats">
-            <div class="stat">
-              <span>Session Spins</span>
-              <strong id="spinCount">0</strong>
+          <aside class="cashier-panel" aria-label="Chip cashier">
+            <div class="panel-block">
+              <p class="panel-kicker">Cashier</p>
+              <h3>Buy Chips</h3>
+              <p class="small-copy">
+                Kirim RITUAL testnet ke owner address, lalu chip masuk ke saldo game.
+              </p>
             </div>
-            <div class="stat">
-              <span>Best Win</span>
-              <strong id="bestWin">0</strong>
+
+            <div class="package-list" id="packageList"></div>
+
+            <button class="buy-button" id="buyChipsButton" type="button">Buy Selected Package</button>
+
+            <div class="address-box">
+              <span>Owner Address</span>
+              <code id="ownerAddress">0xcf3da8d27bc354c8beb13a98205043e5c0967232</code>
             </div>
-            <div class="stat">
-              <span>Chain ID</span>
-              <strong>1979</strong>
+
+            <div class="stats-grid">
+              <div class="stat">
+                <span>Spins</span>
+                <strong id="spinCount">0</strong>
+              </div>
+              <div class="stat">
+                <span>Best Win</span>
+                <strong id="bestWin">0</strong>
+              </div>
             </div>
-            <div class="status-log" id="statusLog">
-              Ready for demo play.
-            </div>
+
+            <div class="status-log" id="statusLog">Ready.</div>
           </aside>
         </div>
       </section>
