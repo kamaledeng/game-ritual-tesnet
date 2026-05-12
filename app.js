@@ -936,13 +936,8 @@ async function buyChips() {
 async function spin() {
   if (state.spinning) return;
   
-  // Don't stop auto spin for wallet connection issues during auto spin
-  const wasAutoSpinning = state.autoSpinning;
-  
   if (!isConnectedToRitual()) {
-    if (!wasAutoSpinning) {
-      stopAutoSpin();
-    }
+    stopAutoSpin();
     log("Connect wallet to Ritual testnet first before spinning.");
     return;
   }
@@ -951,9 +946,7 @@ async function spin() {
   const spinBet = isFreeSpin ? state.lastFreeSpinBet || state.bet : state.bet;
 
   if (!isFreeSpin && state.chips < state.bet) {
-    if (!wasAutoSpinning) {
-      stopAutoSpin();
-    }
+    stopAutoSpin();
     log("Insufficient chips. Buy chips first or lower bet.");
     return;
   }
@@ -1158,24 +1151,8 @@ async function spin() {
       stopAutoSpin();
       log("Auto Spin selesai.");
     } else if (state.chips >= state.bet && !state.bonusActive) {
-      // Much faster auto spin delay
-      if (state.autoTimer) {
-        window.clearTimeout(state.autoTimer);
-        state.autoTimer = null;
-      }
-      state.autoTimer = window.setTimeout(() => {
-        if (state.autoSpinning && state.autoRemaining > 0 && !state.bonusActive) {
-          log(`Auto Spin continuing... ${state.autoRemaining} remaining.`);
-          spin();
-        } else {
-          if (state.autoRemaining <= 0) {
-            log("Auto Spin completed.");
-          } else if (state.bonusActive) {
-            log("Auto Spin paused during bonus.");
-          }
-          stopAutoSpin();
-        }
-      }, state.autoSpinning ? 200 : spinDelay(940));
+      // Simple auto spin timer
+      state.autoTimer = window.setTimeout(spin, 200);
     } else {
       stopAutoSpin();
       log(state.chips < state.bet ? "Auto Spin berhenti karena chip tidak cukup." : "Auto Spin berhenti karena bonus aktif.");
