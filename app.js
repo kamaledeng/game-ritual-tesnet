@@ -24,6 +24,8 @@ const freeSpinAwards = {
   4: 14,
   5: 16,
 };
+const BUY_BONUS_MULTIPLIER = 80;
+const BUY_BONUS_FREE_SPINS = 12;
 const chipPackages = [
   { ritual: "0.01", chips: 1000 },
   { ritual: "0.05", chips: 6000 },
@@ -151,6 +153,7 @@ const el = {
   spinButton: document.querySelector("#spinButton"),
   autoSpinButton: document.querySelector("#autoSpinButton"),
   maxBetButton: document.querySelector("#maxBetButton"),
+  buyBonusButton: document.querySelector("#buyBonusButton"),
   packageList: document.querySelector("#packageList"),
   buyChipsButton: document.querySelector("#buyChipsButton"),
   spinCount: document.querySelector("#spinCount"),
@@ -997,12 +1000,28 @@ function effectiveBet() {
   return state.bet;
 }
 
+function buyBonusPrice() {
+  return Math.max(0, state.bet * BUY_BONUS_MULTIPLIER);
+}
+
+function canBuyBonus() {
+  return (
+    isConnectedToRitual() &&
+    !state.spinning &&
+    !state.autoSpinning &&
+    !state.bonusActive &&
+    !hasActiveFreeSpin() &&
+    state.chips >= buyBonusPrice()
+  );
+}
+
 function canPlay() {
   return isConnectedToRitual() && (state.chips >= state.bet || hasActiveFreeSpin());
 }
 
 function render() {
   const locked = betControlsLocked();
+  const bonusPrice = buyBonusPrice();
   document.documentElement.dataset.connected = isConnectedToRitual() ? "true" : "false";
   el.chips.textContent = state.chips.toLocaleString();
   el.remainingSpins.textContent = Math.floor(state.chips / state.bet).toLocaleString();
@@ -1034,6 +1053,10 @@ function render() {
   el.decreaseBet.disabled = locked;
   el.increaseBet.disabled = locked;
   el.maxBetButton.disabled = locked;
+  if (el.buyBonusButton) {
+    el.buyBonusButton.disabled = !canBuyBonus();
+    el.buyBonusButton.title = `Buy Free Spins (${BUY_BONUS_FREE_SPINS}) for ${bonusPrice.toLocaleString()} chips`;
+  }
   document.querySelectorAll(".speed-btn").forEach((btn) => {
     const on = btn.dataset.speed === state.spinSpeed;
     btn.classList.toggle("active", on);
@@ -1041,6 +1064,42 @@ function render() {
     btn.disabled = state.spinning;
   });
   applySpinSpeedTheme();
+}
+
+async function buyBonus() {
+  try {
+    if (state.spinning || state.bonusActive || hasActiveFreeSpin()) return;
+
+    if (!state.account) await connectWallet();
+    if (!state.account) return;
+
+    if (!isConnectedToRitual()) {
+      log("Connect your wallet to Ritual testnet before buying the bonus.");
+      return;
+    }
+
+    stopAutoSpin();
+
+    const price = buyBonusPrice();
+    if (state.chips < price) {
+      log(`Not enough chips. Bonus costs ${price.toLocaleString()} chips.`);
+      return;
+    }
+
+    state.chips -= price;
+    state.freeSpinsRemaining = BUY_BONUS_FREE_SPINS;
+    state.freeSpinsTotal = BUY_BONUS_FREE_SPINS;
+    state.freeSpinWin = 0;
+    state.bonusActive = true;
+    state.lastFreeSpinBet = state.bet;
+    showBonusBanner(`Feature Buy: ${BUY_BONUS_FREE_SPINS} free spins activated.`);
+    log(`Feature Buy activated: ${BUY_BONUS_FREE_SPINS} free spins.`);
+    saveState();
+    render();
+    state.autoTimer = window.setTimeout(spin, spinDelay(1400));
+  } catch (error) {
+    log(error.message || "Bonus purchase failed.");
+  }
 }
 
 async function ensureRitualChain() {
@@ -1349,6 +1408,7 @@ el.connectWallet.addEventListener("click", connectWallet);
 el.buyChipsButton.addEventListener("click", buyChips);
 el.spinButton.addEventListener("click", spin);
 el.autoSpinButton.addEventListener("click", toggleAutoSpin);
+el.buyBonusButton?.addEventListener("click", buyBonus);
 el.maxBetButton.addEventListener("click", () => setBet(bets[bets.length - 1]));
 el.decreaseBet.addEventListener("click", () => {
   const index = Math.max(0, bets.indexOf(state.bet) - 1);

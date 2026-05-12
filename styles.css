@@ -1252,6 +1252,13 @@ html[data-connected="false"] .secondary-button {
   font-size: 0.82rem;
 }
 
+.turbo-button--buy {
+  width: 96px;
+  border-color: rgba(255, 228, 160, 0.7);
+  background: linear-gradient(180deg, #e2b766, #7d401a);
+  color: #fff3c4;
+}
+
 .auto-button {
   position: relative;
   width: 64px;
@@ -1960,7 +1967,7 @@ html[data-connected="false"] .secondary-button {
 
   .bottom-console {
     display: grid;
-    grid-template-columns: 48px 1fr 48px 58px 64px;
+    grid-template-columns: 48px 1fr 48px 58px 96px 64px;
     border-radius: 16px;
   }
 
