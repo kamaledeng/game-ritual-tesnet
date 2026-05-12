@@ -135,6 +135,7 @@ const el = {
   sideRitualBalance: document.querySelector("#sideRitualBalance"),
   connectWallet: document.querySelector("#connectWallet"),
   chips: document.querySelector("#chips"),
+  chipsSide: document.querySelector("#chipsSide"),
   remainingSpins: document.querySelector("#remainingSpins"),
   freeSpinCounter: document.querySelector("#freeSpinCounter"),
   bonusBanner: document.querySelector("#bonusBanner"),
@@ -992,6 +993,7 @@ function canPlay() {
 function render() {
   document.documentElement.dataset.connected = isConnectedToRitual() ? "true" : "false";
   el.chips.textContent = state.chips.toLocaleString();
+  if (el.chipsSide) el.chipsSide.textContent = state.chips.toLocaleString();
   el.remainingSpins.textContent = Math.floor(state.chips / state.bet).toLocaleString();
   el.freeSpinCounter.textContent = state.freeSpinsRemaining.toLocaleString();
   el.betLabel.textContent = state.bet.toLocaleString();

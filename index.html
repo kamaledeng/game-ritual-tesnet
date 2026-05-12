@@ -13,6 +13,12 @@
   <body>
     <main class="app-shell">
       <section class="play-surface" aria-label="Ritual Mahjong Ways">
+        <nav class="linkbar" aria-label="Ritual links">
+          <a href="https://explorer.ritualfoundation.org/" target="_blank" rel="noopener noreferrer">Explorer</a>
+          <a href="https://docs.ritualfoundation.org/" target="_blank" rel="noopener noreferrer">Docs</a>
+          <a href="https://ritual.net/" target="_blank" rel="noopener noreferrer">Ritual.net</a>
+          <a href="https://faucet.ritualfoundation.org/" target="_blank" rel="noopener noreferrer">Faucet</a>
+        </nav>
         <header class="topbar">
           <div class="player-badge" aria-label="Player">
             <a
@@ -25,6 +31,11 @@
               <img src="./assets/ritual-logo.png" alt="Ritual Mahjong logo" />
             </a>
             <button class="hud-icon" type="button" title="Games">▦</button>
+          </div>
+
+          <div class="coin-meter" aria-label="Chip balance">
+            <span>CHIP BALANCE</span>
+            <strong id="chips">0</strong>
           </div>
 
           <div class="wallet-panel">
@@ -162,7 +173,7 @@
             <div class="stats-grid">
               <div class="stat stat--wide stat--chips">
                 <span>Chip Balance</span>
-                <strong id="chips">0</strong>
+                <strong id="chipsSide">0</strong>
               </div>
               <div class="stat stat--wide">
                 <span>Wallet Balance</span>
