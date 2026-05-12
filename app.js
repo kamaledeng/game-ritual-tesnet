@@ -1032,26 +1032,8 @@ async function spin() {
   while (cascadeIndex < multipliers.length) {
     const multiplier = multipliers[cascadeIndex];
     const { payout, winningCells } = calculateWin(grid, multiplier, spinBet);
-    
-    // Force at least 2 cascades for any win, and chance for 3rd
+
     if (payout <= 0 || winningCells.length === 0) {
-      // If first cascade and no win, force a small win
-      if (cascadeIndex === 0 && totalPayout === 0) {
-        const forcedGrid = makeForcedWinGrid({ bonus: isFreeSpin, allowScatter: true });
-        grid = forcedGrid;
-        const forcedResult = calculateWin(grid, multiplier, spinBet);
-        if (forcedResult.payout > 0) {
-          totalPayout += forcedResult.payout;
-          el.lastWin.textContent = totalPayout.toLocaleString();
-          el.resultText.textContent = `${isFreeSpin ? "Bonus " : ""}Win x${multiplier}: ${forcedResult.payout.toLocaleString()} chips.`;
-          drawReels(grid, forcedResult.winningCells);
-          showWinPopup(forcedResult.payout, "default");
-          sfxSmallWin();
-          await sleep(isFreeSpin ? 420 : 340);
-          cascadeIndex += 1;
-          continue;
-        }
-      }
       break;
     }
 
@@ -1073,23 +1055,7 @@ async function spin() {
     el.resultText.textContent = `Cascade x${multiplier}...`;
     await sleepAuto(isFreeSpin ? 480 : 400);
     el.reelsFrame?.classList.remove("cascade-settling");
-    const followUpChance = isFreeSpin
-      ? cascadeIndex === 0
-        ? 0.45  // Increased from 0.125
-        : cascadeIndex === 1
-          ? 0.25  // Increased from 0.058
-          : 0.12  // Increased from 0.02
-      : cascadeIndex === 0
-        ? 0.35  // Increased from 0.108
-        : cascadeIndex === 1
-          ? 0.18  // Increased from 0.038
-          : 0.08; // Increased from 0.013
-    grid = makeControlledCascadeGrid(grid, winningCells, Math.random() < followUpChance, {
-      bonus: isFreeSpin,
-      allowScatter: isFreeSpin,
-      cascadeIndex,
-      betAmount: spinBet
-    });
+    grid = makeCascadeGrid(grid, winningCells, { bonus: isFreeSpin, allowScatter: isFreeSpin });
     drawReels(grid);
     await sleepAuto(isFreeSpin ? 360 : 280);
     cascadeIndex += 1;
