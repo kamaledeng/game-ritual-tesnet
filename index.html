@@ -101,20 +101,53 @@
               <span id="resultText">Beli chip dengan RITUAL testnet untuk mulai spin.</span>
             </div>
 
-            <div class="bottom-console">
-              <button class="round-button" id="decreaseBet" type="button">-</button>
-              <div class="bet-readout">
-                <span>Total Bet</span>
-                <strong id="betLabel">500</strong>
-              </div>
-              <button class="round-button" id="increaseBet" type="button">+</button>
-              <button class="turbo-button" id="maxBetButton" type="button">Max</button>
-              <button class="spin-button" id="spinButton" type="button">Spin</button>
-              <button class="auto-button" id="autoSpinButton" type="button">Auto</button>
-            </div>
+            <div class="control-dock">
+              <div class="control-dock__rim" aria-hidden="true"></div>
+              <div class="control-dock__glow" aria-hidden="true"></div>
 
-            <div class="quick-bets" id="quickBets" aria-label="Quick bets"></div>
-            <div class="auto-options" id="autoOptions" aria-label="Auto spin options"></div>
+              <div class="speed-bar" role="group" aria-label="Kecepatan animasi spin">
+                <div class="speed-bar__title">
+                  <span class="speed-bar__tag">SPEED</span>
+                  <span class="speed-bar__hint">Pelan · Normal · Cepat</span>
+                </div>
+                <div class="speed-bar__segmented">
+                  <button type="button" class="speed-btn" data-speed="slow" id="speedPelan" title="Lambat — dramatis">
+                    <span class="speed-btn__glyph speed-btn__glyph--slow" aria-hidden="true"></span>
+                    Pelan
+                  </button>
+                  <button type="button" class="speed-btn" data-speed="normal" id="speedNormal" title="Standar">
+                    <span class="speed-btn__glyph speed-btn__glyph--mid" aria-hidden="true"></span>
+                    Normal
+                  </button>
+                  <button type="button" class="speed-btn" data-speed="turbo" id="speedTurbo" title="Cepat — turbo">
+                    <span class="speed-btn__glyph speed-btn__glyph--fast" aria-hidden="true"></span>
+                    Cepat
+                  </button>
+                </div>
+              </div>
+
+              <div class="bottom-console">
+                <button class="round-button round-button--bet" id="decreaseBet" type="button" aria-label="Turunkan bet">
+                  −
+                </button>
+                <div class="bet-readout">
+                  <span>Total Bet</span>
+                  <strong id="betLabel">500</strong>
+                </div>
+                <button class="round-button round-button--bet" id="increaseBet" type="button" aria-label="Naikkan bet">
+                  +
+                </button>
+                <button class="turbo-button" id="maxBetButton" type="button">Max</button>
+                <button class="spin-button" id="spinButton" type="button">
+                  <span class="spin-button__ring" aria-hidden="true"></span>
+                  <span class="spin-button__label">Spin</span>
+                </button>
+                <button class="auto-button" id="autoSpinButton" type="button">Auto</button>
+              </div>
+
+              <div class="quick-bets" id="quickBets" aria-label="Quick bets"></div>
+              <div class="auto-options" id="autoOptions" aria-label="Auto spin options"></div>
+            </div>
           </section>
 
           <aside class="cashier-panel" aria-label="Chip cashier">

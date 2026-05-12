@@ -30,6 +30,8 @@ const chipPackages = [
   { ritual: "0.1", chips: 15000 },
 ];
 
+const SPIN_SPEED_IDS = ["slow", "normal", "turbo"];
+
 const symbols = [
   { name: "char-1", suit: "character", rank: 1, pay: 3, tone: "red", mark: "\u4e00", suitMark: "\u842c" },
   { name: "char-5", suit: "character", rank: 5, pay: 5, tone: "red", mark: "\u4e94", suitMark: "\u842c" },
@@ -76,6 +78,7 @@ const state = {
   freeSpinWin: 0,
   bonusActive: false,
   lastFreeSpinBet: 0,
+  spinSpeed: saved.spinSpeed,
 };
 
 const el = {
@@ -111,14 +114,45 @@ const el = {
   winPopupLayer: document.querySelector("#winPopupLayer"),
 };
 
+function spinSpeedFactor() {
+  if (state.spinSpeed === "slow") return 1.55;
+  if (state.spinSpeed === "turbo") return 0.34;
+  return 1;
+}
+
+function spinDelay(ms) {
+  return Math.max(12, Math.round(ms * spinSpeedFactor()));
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, spinDelay(ms)));
+}
+
+function applySpinSpeedTheme() {
+  document.documentElement.dataset.spinSpeed = state.spinSpeed;
+}
+
+function setSpinSpeed(next) {
+  if (!SPIN_SPEED_IDS.includes(next) || state.spinning) return;
+  state.spinSpeed = next;
+  saveState();
+  applySpinSpeedTheme();
+  render();
+  if (next === "slow") log("Kecepatan Pelan — animasi & suara lebih panjang.");
+  else if (next === "turbo") log("Kecepatan Cepat — spin turbo, cascade ringkas.");
+  else log("Kecepatan Normal — ritme standar casino.");
+}
+
 function readSavedSettings() {
   try {
     const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    const spinSpeed = SPIN_SPEED_IDS.includes(parsed.spinSpeed) ? parsed.spinSpeed : "normal";
     return {
       bet: bets.includes(Number(parsed.bet)) ? Number(parsed.bet) : bets[2],
+      spinSpeed,
     };
   } catch {
-    return { bet: bets[2] };
+    return { bet: bets[2], spinSpeed: "normal" };
   }
 }
 
@@ -156,7 +190,7 @@ function resetBonusState() {
 }
 
 function saveState() {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify({ bet: state.bet }));
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify({ bet: state.bet, spinSpeed: state.spinSpeed }));
 
   if (!state.account) return;
 
@@ -307,8 +341,8 @@ function showWinPopup(amount, variant = "default") {
   window.requestAnimationFrame(() => pill.classList.add("visible"));
   window.setTimeout(() => {
     pill.classList.remove("visible");
-    window.setTimeout(() => pill.remove(), 440);
-  }, variant === "mega" ? 1900 : 1000);
+    window.setTimeout(() => pill.remove(), spinDelay(440));
+  }, variant === "mega" ? spinDelay(1900) : spinDelay(1000));
 }
 
 function showScatterCinematic() {
@@ -319,12 +353,12 @@ function showScatterCinematic() {
   window.setTimeout(() => {
     ov.classList.remove("cinematic--scatter-active");
     ov.hidden = true;
-  }, 2600);
+  }, spinDelay(2600));
 }
 
 function pulseReelStopPhase() {
   el.reelsFrame?.classList.add("reels-frame--stopping");
-  window.setTimeout(() => el.reelsFrame?.classList.remove("reels-frame--stopping"), 920);
+  window.setTimeout(() => el.reelsFrame?.classList.remove("reels-frame--stopping"), spinDelay(920));
 }
 
 function setNearMissSuspense(on) {
@@ -337,7 +371,10 @@ function shakeMachine(intensity = "normal") {
   el.machine.classList.remove("shake-soft", "shake-hard");
   void el.machine.offsetWidth;
   el.machine.classList.add(intensity === "hard" ? "shake-hard" : "shake-soft");
-  window.setTimeout(() => el.machine.classList.remove("shake-soft", "shake-hard"), intensity === "hard" ? 700 : 460);
+  window.setTimeout(
+    () => el.machine.classList.remove("shake-soft", "shake-hard"),
+    spinDelay(intensity === "hard" ? 700 : 460),
+  );
 }
 
 function cloneSymbol(symbol) {
@@ -783,6 +820,13 @@ function render() {
   renderBets();
   renderAutoOptions();
   el.machine?.classList.toggle("machine--free-spins", Boolean(state.bonusActive || hasActiveFreeSpin()));
+  document.querySelectorAll(".speed-btn").forEach((btn) => {
+    const on = btn.dataset.speed === state.spinSpeed;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.disabled = state.spinning;
+  });
+  applySpinSpeedTheme();
 }
 
 async function ensureRitualChain() {
@@ -889,7 +933,7 @@ async function spin() {
     flashChipDeduction();
     sfxChipDrop();
     for (let tick = 0; tick < 10; tick += 1) {
-      window.setTimeout(() => sfxBetTick(), tick * 52);
+      window.setTimeout(() => sfxBetTick(), tick * spinDelay(52));
     }
   }
 
@@ -901,10 +945,10 @@ async function spin() {
   render();
 
   const spinMs = isFreeSpin ? 1180 : 980;
-  await new Promise((resolve) => setTimeout(resolve, spinMs * 0.42));
+  await sleep(spinMs * 0.42);
   pulseReelStopPhase();
   el.resultText.textContent = isFreeSpin ? "Golden Dragon reels..." : "Hampir berhenti...";
-  await new Promise((resolve) => setTimeout(resolve, spinMs * 0.38));
+  await sleep(spinMs * 0.38);
 
   const { grid: builtGrid, target: spinTarget } = buildSpinGrid({ bonus: isFreeSpin, allowScatter: true });
   let grid = builtGrid;
@@ -921,14 +965,14 @@ async function spin() {
   if (spinTarget === "near" && award === 0) {
     setNearMissSuspense(true);
     sfxNearMiss();
-    await new Promise((r) => setTimeout(r, 680));
+    await sleep(680);
     setNearMissSuspense(false);
   }
 
   if (award > 0) {
     showScatterCinematic();
     sfxScatterFanfare();
-    await new Promise((resolve) => setTimeout(resolve, 520));
+    await sleep(520);
     if (isFreeSpin) {
       const retrigger = Math.min(5, Math.ceil(award / 3));
       state.freeSpinsRemaining += retrigger;
@@ -945,7 +989,7 @@ async function spin() {
       log(`${award} Free Spins aktif. Spin gratis memakai bet ${spinBet.toLocaleString()} chips.`);
     }
     render();
-    await new Promise((resolve) => setTimeout(resolve, 820));
+    await sleep(820);
   }
 
   while (cascadeIndex < multipliers.length) {
@@ -964,12 +1008,12 @@ async function spin() {
     showWinPopup(payout, popVariant);
     if (cascadeIndex === 0) sfxSmallWin();
     else sfxCascade();
-    await new Promise((resolve) => setTimeout(resolve, isFreeSpin ? 420 : 340));
+    await sleep(isFreeSpin ? 420 : 340);
 
     el.reelsFrame?.classList.add("cascade-settling");
     drawReels(grid, winningCells, true);
     el.resultText.textContent = `Cascade x${multiplier}...`;
-    await new Promise((resolve) => setTimeout(resolve, isFreeSpin ? 480 : 400));
+    await sleep(isFreeSpin ? 480 : 400);
     el.reelsFrame?.classList.remove("cascade-settling");
     const followUpChance = isFreeSpin
       ? cascadeIndex === 0
@@ -987,7 +1031,7 @@ async function spin() {
       allowScatter: isFreeSpin,
     });
     drawReels(grid);
-    await new Promise((resolve) => setTimeout(resolve, isFreeSpin ? 360 : 280));
+    await sleep(isFreeSpin ? 360 : 280);
     cascadeIndex += 1;
   }
 
@@ -1026,7 +1070,7 @@ async function spin() {
   render();
 
   if (state.freeSpinsRemaining > 0) {
-    state.autoTimer = window.setTimeout(spin, 1120);
+    state.autoTimer = window.setTimeout(spin, spinDelay(1120));
     return;
   }
 
@@ -1039,7 +1083,7 @@ async function spin() {
       hideBonusBanner();
       renderMultiplier(-1, false);
       render();
-    }, 1700);
+    }, spinDelay(1700));
   }
 
   if (state.autoSpinning) {
@@ -1047,7 +1091,7 @@ async function spin() {
       stopAutoSpin();
       log("Auto Spin selesai.");
     } else if (state.chips >= state.bet) {
-      state.autoTimer = window.setTimeout(spin, 940);
+      state.autoTimer = window.setTimeout(spin, spinDelay(940));
     } else {
       stopAutoSpin();
       log("Auto Spin berhenti karena chip tidak cukup.");
@@ -1108,6 +1152,10 @@ el.increaseBet.addEventListener("click", () => {
   setBet(bets[index]);
 });
 
+document.querySelectorAll(".speed-btn").forEach((btn) => {
+  btn.addEventListener("click", () => setSpinSpeed(btn.dataset.speed));
+});
+
 if (window.ethereum) {
   window.ethereum.on?.("accountsChanged", ([account]) => {
     state.account = account || "";
@@ -1128,6 +1176,7 @@ if (window.ethereum) {
 }
 
 renderPackages();
+applySpinSpeedTheme();
 drawReels();
 renderMultiplier(-1);
 render();
