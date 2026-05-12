@@ -1150,12 +1150,16 @@ async function spin() {
     if (state.autoRemaining <= 0) {
       stopAutoSpin();
       log("Auto Spin selesai.");
-    } else if (state.chips >= state.bet && !state.bonusActive) {
-      // Simple auto spin timer
-      state.autoTimer = window.setTimeout(spin, 200);
+    } else if (state.chips >= state.bet) {
+      // Continue auto spin
+      state.autoTimer = window.setTimeout(() => {
+        if (state.autoSpinning && state.autoRemaining > 0) {
+          spin();
+        }
+      }, 200);
     } else {
       stopAutoSpin();
-      log(state.chips < state.bet ? "Auto Spin berhenti karena chip tidak cukup." : "Auto Spin berhenti karena bonus aktif.");
+      log("Auto Spin berhenti karena chip tidak cukup.");
     }
   }
 }
@@ -1187,16 +1191,14 @@ function toggleAutoSpin() {
     return;
   }
 
-  if (state.bonusActive) {
-    log("Auto Spin menunggu bonus round selesai.");
-    return;
-  }
-
+  // Start auto spin
   state.autoSpinning = true;
   state.autoRemaining = state.selectedAutoSpins;
   log(`Auto Spin ${state.selectedAutoSpins} aktif.`);
   render();
-  spin();
+  
+  // Start first spin immediately
+  setTimeout(() => spin(), 100);
 }
 
 el.connectWallet.addEventListener("click", connectWallet);
