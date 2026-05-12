@@ -13,6 +13,7 @@ const RITUAL_CHAIN = {
 const OWNER_ADDRESS = "0xcf3da8d27bc354c8beb13a98205043e5c0967232";
 const STORAGE_KEY = "mahjong-fortune-ritual-state-v1";
 const bets = [10, 20, 50, 100, 250, 500];
+const autoSpinOptions = [10, 50, 100];
 const chipPackages = [
   { ritual: "0.01", chips: 1000 },
   { ritual: "0.05", chips: 6000 },
@@ -41,6 +42,8 @@ const state = {
   bestWin: saved.bestWin,
   spinning: false,
   autoSpinning: false,
+  selectedAutoSpins: 10,
+  autoRemaining: 0,
   autoTimer: null,
 };
 
@@ -58,6 +61,7 @@ const el = {
   decreaseBet: document.querySelector("#decreaseBet"),
   increaseBet: document.querySelector("#increaseBet"),
   quickBets: document.querySelector("#quickBets"),
+  autoOptions: document.querySelector("#autoOptions"),
   spinButton: document.querySelector("#spinButton"),
   autoSpinButton: document.querySelector("#autoSpinButton"),
   maxBetButton: document.querySelector("#maxBetButton"),
@@ -182,7 +186,7 @@ function buildSpinGrid() {
   return grid;
 }
 
-function drawReels(grid = makeGrid(), winningNames = []) {
+function drawReels(grid = makeGrid(), winningNames = [], breaking = false) {
   el.reels.innerHTML = "";
   grid.forEach((column) => {
     const reel = document.createElement("div");
@@ -191,12 +195,19 @@ function drawReels(grid = makeGrid(), winningNames = []) {
       const cell = document.createElement("div");
       cell.className = `symbol symbol--${symbol.tone} ${
         winningNames.includes(symbol.name) ? "win" : ""
+      } ${breaking && winningNames.includes(symbol.name) ? "breaking" : ""
       }`;
       cell.textContent = symbol.icon;
       reel.appendChild(cell);
     });
     el.reels.appendChild(reel);
   });
+}
+
+function makeCascadeGrid(grid, winningNames) {
+  return grid.map((column) =>
+    column.map((symbol) => (winningNames.includes(symbol.name) ? randomSymbol() : symbol)),
+  );
 }
 
 function calculateWin(grid) {
@@ -256,6 +267,22 @@ function renderBets() {
   });
 }
 
+function renderAutoOptions() {
+  el.autoOptions.innerHTML = "";
+  autoSpinOptions.forEach((count) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `auto-option ${count === state.selectedAutoSpins ? "active" : ""}`;
+    button.textContent = `Auto ${count}`;
+    button.disabled = state.autoSpinning;
+    button.addEventListener("click", () => {
+      state.selectedAutoSpins = count;
+      render();
+    });
+    el.autoOptions.appendChild(button);
+  });
+}
+
 function setBet(nextBet) {
   state.bet = Math.max(bets[0], Math.min(bets[bets.length - 1], nextBet));
   saveState();
@@ -271,7 +298,7 @@ function render() {
   el.ritualBalance.textContent = `${state.ritualBalance} RITUAL`;
   el.sideRitualBalance.textContent = `${state.ritualBalance} RITUAL`;
   el.spinButton.disabled = state.spinning || state.chips < state.bet;
-  el.autoSpinButton.textContent = state.autoSpinning ? "Stop" : "Auto";
+  el.autoSpinButton.textContent = state.autoSpinning ? `Stop ${state.autoRemaining}` : "Auto";
   el.autoSpinButton.classList.toggle("active", state.autoSpinning);
   el.autoSpinButton.disabled = !state.autoSpinning && state.chips < state.bet;
 
@@ -285,6 +312,7 @@ function render() {
   }
 
   renderBets();
+  renderAutoOptions();
 }
 
 async function ensureRitualChain() {
@@ -364,6 +392,7 @@ async function spin() {
   }
 
   state.spinning = true;
+  if (state.autoSpinning) state.autoRemaining = Math.max(0, state.autoRemaining - 1);
   state.chips -= state.bet;
   state.spinCount += 1;
   el.lastWin.textContent = "0";
@@ -386,11 +415,23 @@ async function spin() {
   el.resultText.textContent =
     payout > 0 ? `Menang ${payout.toLocaleString()} chips.` : "Belum menang, coba spin lagi.";
 
+  if (payout > 0 && winningNames.length > 0) {
+    await new Promise((resolve) => setTimeout(resolve, 260));
+    drawReels(grid, winningNames, true);
+    el.resultText.textContent = "Tile menang pecah...";
+    await new Promise((resolve) => setTimeout(resolve, 430));
+    drawReels(makeCascadeGrid(grid, winningNames));
+    await new Promise((resolve) => setTimeout(resolve, 180));
+  }
+
   saveState();
   render();
 
   if (state.autoSpinning) {
-    if (state.chips >= state.bet) {
+    if (state.autoRemaining <= 0) {
+      stopAutoSpin();
+      log("Auto Spin selesai.");
+    } else if (state.chips >= state.bet) {
       state.autoTimer = window.setTimeout(spin, 900);
     } else {
       stopAutoSpin();
@@ -401,6 +442,7 @@ async function spin() {
 
 function stopAutoSpin() {
   state.autoSpinning = false;
+  state.autoRemaining = 0;
   if (state.autoTimer) {
     window.clearTimeout(state.autoTimer);
     state.autoTimer = null;
@@ -421,7 +463,8 @@ function toggleAutoSpin() {
   }
 
   state.autoSpinning = true;
-  log("Auto Spin aktif.");
+  state.autoRemaining = state.selectedAutoSpins;
+  log(`Auto Spin ${state.selectedAutoSpins} aktif.`);
   render();
   spin();
 }

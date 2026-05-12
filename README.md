@@ -10,7 +10,8 @@ Static mahjong slot-style game for Ritual testnet. Players buy demo chips by sen
 - Quick bet controls: `10`, `20`, `50`, `100`, `250`, `500`
 - 6x5 mahjong tile reels with cluster-style payouts
 - Slot-style outcome balance with losing spins, small wins, medium wins, and rare bigger wins
-- Auto Spin with start/stop behavior
+- Auto Spin presets: `10`, `50`, `100`
+- Win tile break/cascade visual effect
 - Wallet connect with Ritual testnet chain config
 - Static deployment path for GitHub and Vercel
 

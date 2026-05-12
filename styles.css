@@ -451,7 +451,8 @@ button:disabled {
   box-shadow: 0 7px 0 #7c2d0e, 0 0 18px rgba(255, 210, 61, 0.45);
 }
 
-.quick-bets {
+.quick-bets,
+.auto-options {
   position: relative;
   z-index: 1;
   display: flex;
@@ -461,16 +462,26 @@ button:disabled {
   margin-top: 10px;
 }
 
-.quick-bet {
+.auto-options {
+  margin-top: 8px;
+}
+
+.quick-bet,
+.auto-option {
   min-width: 58px;
   padding: 0 12px;
   border-color: rgba(255, 211, 77, 0.28);
 }
 
 .quick-bet.active,
+.auto-option.active,
 .package-card.active {
   border-color: var(--gold);
   background: rgba(255, 211, 77, 0.18);
+}
+
+.symbol.breaking {
+  animation: breakTile 430ms ease forwards;
 }
 
 .cashier-panel {
@@ -567,6 +578,23 @@ button:disabled {
   to {
     transform: translateY(2px);
     filter: brightness(0.84);
+  }
+}
+
+@keyframes breakTile {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  55% {
+    opacity: 0.85;
+    transform: scale(1.14) rotate(4deg);
+    filter: brightness(1.45);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.18) rotate(-12deg);
+    filter: brightness(1.9);
   }
 }
 
