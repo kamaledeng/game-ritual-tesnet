@@ -14,6 +14,9 @@ const OWNER_ADDRESS = "0xcf3da8d27bc354c8beb13a98205043e5c0967232";
 const STORAGE_KEY = "mahjong-fortune-ritual-state-v1";
 const bets = [10, 20, 50, 100, 250, 500];
 const autoSpinOptions = [10, 50, 100];
+const BOARD_COLUMNS = 5;
+const BOARD_ROWS = 4;
+const cascadeMultipliers = [1, 2, 3, 5];
 const chipPackages = [
   { ritual: "0.01", chips: 1000 },
   { ritual: "0.05", chips: 6000 },
@@ -57,6 +60,7 @@ const el = {
   reels: document.querySelector("#reels"),
   resultText: document.querySelector("#resultText"),
   lastWin: document.querySelector("#lastWin"),
+  multiplierSteps: document.querySelectorAll(".multiplier-track strong"),
   betLabel: document.querySelector("#betLabel"),
   decreaseBet: document.querySelector("#decreaseBet"),
   increaseBet: document.querySelector("#increaseBet"),
@@ -136,7 +140,9 @@ function randomSymbol() {
 }
 
 function makeGrid() {
-  return Array.from({ length: 6 }, () => Array.from({ length: 5 }, () => randomSymbol()));
+  return Array.from({ length: BOARD_COLUMNS }, () =>
+    Array.from({ length: BOARD_ROWS }, () => randomSymbol()),
+  );
 }
 
 function cloneSymbol(symbol) {
@@ -156,47 +162,55 @@ function buildSpinGrid() {
   if (target === "loss") {
     for (let attempt = 0; attempt < 40; attempt += 1) {
       const grid = makeGrid();
-      if (calculateWin(grid).payout === 0) return grid;
+      if (calculateWin(grid, 1).payout === 0) return grid;
     }
     return makeGrid();
   }
 
   const grid = makeGrid();
   const matchSymbol = pickPayingSymbol();
-  const matchCount = target === "small" ? 8 : target === "medium" ? 10 : 13;
-  const used = new Set();
+  const matchReels = target === "small" ? 3 : target === "medium" ? 4 : 5;
+  const minPerReel = target === "small" ? 1 : 2;
 
-  while (used.size < matchCount) {
-    const column = Math.floor(Math.random() * 6);
-    const row = Math.floor(Math.random() * 5);
-    const key = `${column}-${row}`;
-    if (!used.has(key)) {
-      used.add(key);
-      grid[column][row] = cloneSymbol(matchSymbol);
+  for (let column = 0; column < matchReels; column += 1) {
+    const usedRows = new Set();
+    const targetRows = Math.min(BOARD_ROWS, minPerReel + (Math.random() > 0.55 ? 1 : 0));
+    while (usedRows.size < targetRows) {
+      const row = Math.floor(Math.random() * BOARD_ROWS);
+      if (!usedRows.has(row)) {
+        usedRows.add(row);
+        grid[column][row] = cloneSymbol(matchSymbol);
+      }
     }
   }
 
   if (target === "big") {
     const wild = symbols.find((symbol) => symbol.name === "wild");
     for (let count = 0; count < 3; count += 1) {
-      grid[Math.floor(Math.random() * 6)][Math.floor(Math.random() * 5)] = cloneSymbol(wild);
+      grid[Math.floor(Math.random() * BOARD_COLUMNS)][Math.floor(Math.random() * BOARD_ROWS)] =
+        cloneSymbol(wild);
     }
   }
 
   return grid;
 }
 
-function drawReels(grid = makeGrid(), winningNames = [], breaking = false) {
+function cellKey(columnIndex, rowIndex) {
+  return `${columnIndex}-${rowIndex}`;
+}
+
+function drawReels(grid = makeGrid(), winningCells = [], breaking = false) {
+  const winningSet = new Set(winningCells);
   el.reels.innerHTML = "";
-  grid.forEach((column) => {
+  grid.forEach((column, columnIndex) => {
     const reel = document.createElement("div");
     reel.className = "reel";
-    column.forEach((symbol) => {
+    column.forEach((symbol, rowIndex) => {
+      const isWinning = winningSet.has(cellKey(columnIndex, rowIndex));
       const cell = document.createElement("div");
       cell.className = `symbol symbol--${symbol.tone} ${
-        winningNames.includes(symbol.name) ? "win" : ""
-      } ${breaking && winningNames.includes(symbol.name) ? "breaking" : ""
-      }`;
+        isWinning ? "win" : ""
+      } ${breaking && isWinning ? "breaking" : ""}`;
       cell.textContent = symbol.icon;
       reel.appendChild(cell);
     });
@@ -204,35 +218,52 @@ function drawReels(grid = makeGrid(), winningNames = [], breaking = false) {
   });
 }
 
-function makeCascadeGrid(grid, winningNames) {
-  return grid.map((column) =>
-    column.map((symbol) => (winningNames.includes(symbol.name) ? randomSymbol() : symbol)),
-  );
+function makeCascadeGrid(grid, winningCells) {
+  const winningSet = new Set(winningCells);
+  return grid.map((column, columnIndex) => {
+    const survivors = column.filter((_, rowIndex) => !winningSet.has(cellKey(columnIndex, rowIndex)));
+    const refill = Array.from({ length: BOARD_ROWS - survivors.length }, () => randomSymbol());
+    return [...refill, ...survivors];
+  });
 }
 
-function calculateWin(grid) {
-  const counts = {};
-  for (const symbol of grid.flat()) {
-    if (symbol.pay > 0) counts[symbol.name] = (counts[symbol.name] || 0) + 1;
-  }
-
+function calculateWin(grid, multiplier = 1) {
   let payout = 0;
-  const winningNames = [];
+  const winningCells = new Set();
   for (const symbol of symbols) {
-    const count = counts[symbol.name] || 0;
-    if (symbol.pay > 0 && count >= 8) {
-      winningNames.push(symbol.name);
-      payout += state.bet * symbol.pay * Math.floor(count / 3);
+    if (symbol.pay === 0) continue;
+
+    let ways = 1;
+    let streak = 0;
+    const cellsForSymbol = [];
+
+    for (let columnIndex = 0; columnIndex < grid.length; columnIndex += 1) {
+      const matches = [];
+      grid[columnIndex].forEach((cell, rowIndex) => {
+        if (cell.name === symbol.name || cell.name === "wild") {
+          matches.push(cellKey(columnIndex, rowIndex));
+        }
+      });
+
+      if (matches.length === 0) break;
+      streak += 1;
+      ways *= matches.length;
+      cellsForSymbol.push(...matches);
+    }
+
+    if (streak >= 3) {
+      cellsForSymbol.forEach((key) => winningCells.add(key));
+      payout += Math.max(state.bet, Math.floor((state.bet * symbol.pay * ways * multiplier) / 20));
     }
   }
 
-  const wilds = grid.flat().filter((symbol) => symbol.name === "wild").length;
-  if (wilds >= 3) {
-    payout += state.bet * wilds * 5;
-    winningNames.push("wild");
-  }
+  return { payout, winningCells: Array.from(winningCells) };
+}
 
-  return { payout, winningNames };
+function renderMultiplier(activeIndex = 0) {
+  el.multiplierSteps.forEach((step, index) => {
+    step.classList.toggle("active", index === activeIndex);
+  });
 }
 
 function renderPackages() {
@@ -403,27 +434,43 @@ async function spin() {
 
   await new Promise((resolve) => setTimeout(resolve, 750));
 
-  const grid = buildSpinGrid();
-  const { payout, winningNames } = calculateWin(grid);
-  state.chips += payout;
-  state.bestWin = Math.max(state.bestWin, payout);
-  state.spinning = false;
+  let grid = buildSpinGrid();
+  let totalPayout = 0;
+  let cascadeIndex = 0;
 
-  drawReels(grid, winningNames);
+  drawReels(grid);
   el.reels.classList.remove("spinning");
-  el.lastWin.textContent = payout.toLocaleString();
-  el.resultText.textContent =
-    payout > 0 ? `Menang ${payout.toLocaleString()} chips.` : "Belum menang, coba spin lagi.";
 
-  if (payout > 0 && winningNames.length > 0) {
-    await new Promise((resolve) => setTimeout(resolve, 260));
-    drawReels(grid, winningNames, true);
-    el.resultText.textContent = "Tile menang pecah...";
+  while (cascadeIndex < cascadeMultipliers.length) {
+    const multiplier = cascadeMultipliers[cascadeIndex];
+    const { payout, winningCells } = calculateWin(grid, multiplier);
+    renderMultiplier(cascadeIndex);
+
+    if (payout <= 0 || winningCells.length === 0) break;
+
+    totalPayout += payout;
+    el.lastWin.textContent = totalPayout.toLocaleString();
+    el.resultText.textContent = `Win x${multiplier}: ${payout.toLocaleString()} chips.`;
+    drawReels(grid, winningCells);
+    await new Promise((resolve) => setTimeout(resolve, 360));
+    drawReels(grid, winningCells, true);
+    el.resultText.textContent = `Pecah x${multiplier}, cascade lanjut...`;
     await new Promise((resolve) => setTimeout(resolve, 430));
-    drawReels(makeCascadeGrid(grid, winningNames));
-    await new Promise((resolve) => setTimeout(resolve, 180));
+    grid = makeCascadeGrid(grid, winningCells);
+    drawReels(grid);
+    await new Promise((resolve) => setTimeout(resolve, 260));
+    cascadeIndex += 1;
   }
 
+  state.chips += totalPayout;
+  state.bestWin = Math.max(state.bestWin, totalPayout);
+  state.spinning = false;
+  el.lastWin.textContent = totalPayout.toLocaleString();
+  el.resultText.textContent =
+    totalPayout > 0
+      ? `Total menang ${totalPayout.toLocaleString()} chips.`
+      : "Belum menang, coba spin lagi.";
+  renderMultiplier(0);
   saveState();
   render();
 
@@ -498,4 +545,5 @@ if (window.ethereum) {
 
 renderPackages();
 drawReels();
+renderMultiplier(0);
 render();

@@ -8,7 +8,8 @@ Static mahjong slot-style game for Ritual testnet. Players buy demo chips by sen
 - Chip cashier using Ritual testnet wallet transactions
 - Owner payment address: `0xcf3da8d27bc354c8beb13a98205043e5c0967232`
 - Quick bet controls: `10`, `20`, `50`, `100`, `250`, `500`
-- 6x5 mahjong tile reels with cluster-style payouts
+- 5x4 mahjong tile reels with left-to-right ways-style payouts
+- Cascading wins with multiplier steps `x1`, `x2`, `x3`, `x5`
 - Slot-style outcome balance with losing spins, small wins, medium wins, and rare bigger wins
 - Auto Spin presets: `10`, `50`, `100`
 - Win tile break/cascade visual effect

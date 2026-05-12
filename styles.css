@@ -312,7 +312,7 @@ button:disabled {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(6, minmax(52px, 1fr));
+  grid-template-columns: repeat(5, minmax(58px, 1fr));
   gap: 8px;
   margin: 14px 0;
   padding: 12px;
@@ -322,12 +322,12 @@ button:disabled {
 
 .reel {
   display: grid;
-  grid-template-rows: repeat(5, minmax(70px, 1fr));
+  grid-template-rows: repeat(4, minmax(78px, 1fr));
   gap: 8px;
 }
 
 .symbol {
-  min-height: 70px;
+  min-height: 78px;
   display: grid;
   place-items: center;
   border: 2px solid #d6c9ae;
@@ -653,7 +653,7 @@ button:disabled {
   }
 
   .symbol {
-    min-height: 52px;
+    min-height: 62px;
     border-radius: 7px;
     font-size: 1.7rem;
   }
