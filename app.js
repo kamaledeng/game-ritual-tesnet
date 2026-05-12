@@ -33,17 +33,17 @@ const chipPackages = [
 const SPIN_SPEED_IDS = ["slow", "normal", "turbo"];
 
 const symbols = [
-  { name: "char-1", suit: "character", rank: 1, pay: 3, tone: "red", mark: "\u4e00", suitMark: "\u842c" },
-  { name: "char-5", suit: "character", rank: 5, pay: 5, tone: "red", mark: "\u4e94", suitMark: "\u842c" },
-  { name: "char-8", suit: "character", rank: 8, pay: 7, tone: "red", mark: "\u516b", suitMark: "\u842c" },
-  { name: "dot-2", suit: "dots", rank: 2, pay: 3, tone: "blue", mark: "2", suitMark: "\u7b52" },
-  { name: "dot-5", suit: "dots", rank: 5, pay: 5, tone: "blue", mark: "5", suitMark: "\u7b52" },
-  { name: "bamboo-3", suit: "bamboo", rank: 3, pay: 4, tone: "green", mark: "3", suitMark: "\u7d22" },
-  { name: "bamboo-6", suit: "bamboo", rank: 6, pay: 6, tone: "green", mark: "6", suitMark: "\u7d22" },
-  { name: "east", suit: "wind", rank: 0, pay: 8, tone: "blue", mark: "\u6771", suitMark: "\u98a8" },
-  { name: "red-dragon", suit: "dragon", rank: 0, pay: 10, tone: "red", mark: "\u4e2d", suitMark: "\u9f8d" },
-  { name: "green-dragon", suit: "dragon", rank: 0, pay: 12, tone: "green", mark: "\u767c", suitMark: "\u9f8d" },
-  { name: "white-dragon", suit: "dragon", rank: 0, pay: 14, tone: "blue", mark: "\u767d", suitMark: "\u9f8d" },
+  { name: "char-1", suit: "character", rank: 1, pay: 5, tone: "red", mark: "\u4e00", suitMark: "\u842c" },
+  { name: "char-5", suit: "character", rank: 5, pay: 8, tone: "red", mark: "\u4e94", suitMark: "\u842c" },
+  { name: "char-8", suit: "character", rank: 8, pay: 12, tone: "red", mark: "\u516b", suitMark: "\u842c" },
+  { name: "dot-2", suit: "dots", rank: 2, pay: 4, tone: "blue", mark: "2", suitMark: "\u7b52" },
+  { name: "dot-5", suit: "dots", rank: 5, pay: 6, tone: "blue", mark: "5", suitMark: "\u7b52" },
+  { name: "bamboo-3", suit: "bamboo", rank: 3, pay: 5, tone: "green", mark: "3", suitMark: "\u7d22" },
+  { name: "bamboo-6", suit: "bamboo", rank: 6, pay: 8, tone: "green", mark: "6", suitMark: "\u7d22" },
+  { name: "east", suit: "wind", rank: 0, pay: 10, tone: "blue", mark: "\u6771", suitMark: "\u98a8" },
+  { name: "red-dragon", suit: "dragon", rank: 0, pay: 15, tone: "red", mark: "\u4e2d", suitMark: "\u9f8d" },
+  { name: "green-dragon", suit: "dragon", rank: 0, pay: 20, tone: "green", mark: "\u767c", suitMark: "\u9f8d" },
+  { name: "white-dragon", suit: "dragon", rank: 0, pay: 25, tone: "blue", mark: "\u767d", suitMark: "\u9f8d" },
   { name: "wild", suit: "wild", rank: 0, pay: 0, tone: "gold", mark: "\u767e\u642d", suitMark: "WILD" },
   {
     name: "gold-dragon-scatter",
@@ -471,38 +471,38 @@ function chooseSpinTarget(options = {}) {
   const { bonus = false } = options;
   const roll = Math.random();
 
-  if (!bonus && roll < 0.0036) return "bonus";
+  if (!bonus && roll < 0.0045) return "bonus";
 
   if (bonus) {
-    if (roll < 0.34) return "dead";
-    if (roll < 0.58) return "near";
-    if (roll < 0.86) return "small";
-    if (roll < 0.97) return "medium";
+    if (roll < 0.25) return "dead";
+    if (roll < 0.45) return "near";
+    if (roll < 0.75) return "small";
+    if (roll < 0.92) return "medium";
     return "big";
   }
 
-  const warm = Math.min(state.deadStreak, 7) * 0.024;
+  const warm = Math.min(state.deadStreak, 5) * 0.03;
 
   if (state.deadStreak >= 5) {
-    if (roll < 0.3 - warm * 0.35) return "dead";
-    if (roll < 0.52 - warm * 0.35) return "near";
-    if (roll < 0.88 - warm * 0.25) return "small";
-    if (roll < 0.992) return "medium";
+    if (roll < 0.25 - warm * 0.3) return "dead";
+    if (roll < 0.45 - warm * 0.3) return "near";
+    if (roll < 0.75 - warm * 0.2) return "small";
+    if (roll < 0.94) return "medium";
     return "big";
   }
 
   if (state.deadStreak >= 3) {
-    if (roll < 0.38 - warm * 0.4) return "dead";
-    if (roll < 0.62 - warm * 0.4) return "near";
-    if (roll < 0.9 - warm * 0.28) return "small";
-    if (roll < 0.995) return "medium";
+    if (roll < 0.3 - warm * 0.35) return "dead";
+    if (roll < 0.5 - warm * 0.35) return "near";
+    if (roll < 0.8 - warm * 0.25) return "small";
+    if (roll < 0.96) return "medium";
     return "big";
   }
 
-  if (roll < 0.4 - warm * 0.45) return "dead";
-  if (roll < 0.64 - warm * 0.45) return "near";
-  if (roll < 0.9 - warm * 0.3) return "small";
-  if (roll < 0.997) return "medium";
+  if (roll < 0.35 - warm * 0.4) return "dead";
+  if (roll < 0.55 - warm * 0.4) return "near";
+  if (roll < 0.85 - warm * 0.3) return "small";
+  if (roll < 0.98) return "medium";
   return "big";
 }
 
@@ -674,7 +674,7 @@ function calculateWin(grid, multiplier = 1, betAmount = state.bet) {
 
     if (streak >= 3) {
       cellsForSymbol.forEach((key) => winningCells.add(key));
-      payout += Math.max(1, Math.floor((betAmount * symbol.pay * ways * multiplier) / 9.15));
+      payout += Math.max(1, Math.floor((betAmount * symbol.pay * ways * multiplier) / 25));
     }
   }
 
