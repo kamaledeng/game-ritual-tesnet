@@ -56,7 +56,6 @@ const el = {
   maxBetButton: document.querySelector("#maxBetButton"),
   packageList: document.querySelector("#packageList"),
   buyChipsButton: document.querySelector("#buyChipsButton"),
-  ownerAddress: document.querySelector("#ownerAddress"),
   spinCount: document.querySelector("#spinCount"),
   bestWin: document.querySelector("#bestWin"),
   statusLog: document.querySelector("#statusLog"),
@@ -188,7 +187,6 @@ function render() {
   el.spinCount.textContent = state.spinCount.toLocaleString();
   el.bestWin.textContent = state.bestWin.toLocaleString();
   el.spinButton.disabled = state.spinning || state.chips < state.bet;
-  el.ownerAddress.textContent = OWNER_ADDRESS;
 
   if (!state.account) {
     el.networkStatus.textContent = "Not connected";

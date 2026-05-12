@@ -319,21 +319,12 @@ h3 {
   font-weight: 900;
 }
 
-.address-box,
 .stat,
 .status-log {
   border: 1px solid var(--line);
   border-radius: 6px;
   background: #0f171d;
   padding: 12px;
-}
-
-.address-box code {
-  display: block;
-  margin-top: 6px;
-  color: var(--gold);
-  font-size: 0.78rem;
-  overflow-wrap: anywhere;
 }
 
 .stats-grid {
