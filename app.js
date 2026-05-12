@@ -112,6 +112,7 @@ const el = {
   reelsFrame: document.querySelector(".reels-frame"),
   cinematicOverlay: document.querySelector("#cinematicOverlay"),
   winPopupLayer: document.querySelector("#winPopupLayer"),
+  winLines: document.querySelector("#winLines"),
 };
 
 function spinSpeedFactor() {
@@ -385,6 +386,65 @@ function shakeMachine(intensity = "normal") {
   );
 }
 
+function renderWinLines(winningCells) {
+  if (!el.winLines || !el.reelsFrame) return;
+  el.winLines.innerHTML = "";
+  if (!winningCells || winningCells.length === 0) return;
+  const reelEls = el.reels.querySelectorAll(".reel");
+  if (!reelEls.length) return;
+  const frameRect = el.reelsFrame.getBoundingClientRect();
+  el.winLines.setAttribute("viewBox", `0 0 ${frameRect.width} ${frameRect.height}`);
+  const pointsByColumn = Array.from({ length: BOARD_COLUMNS }, () => []);
+  winningCells.forEach((key) => {
+    const [col, row] = key.split("-").map(Number);
+    const reel = reelEls[col];
+    const cell = reel?.children?.[row];
+    if (!cell) return;
+    const rect = cell.getBoundingClientRect();
+    pointsByColumn[col].push({
+      x: rect.left - frameRect.left + rect.width / 2,
+      y: rect.top - frameRect.top + rect.height / 2,
+    });
+  });
+  pointsByColumn.forEach((points) => points.sort((a, b) => a.y - b.y));
+  const paths = [];
+  for (let col = 0; col < BOARD_COLUMNS - 1; col += 1) {
+    const left = pointsByColumn[col];
+    const right = pointsByColumn[col + 1];
+    if (!left.length || !right.length) continue;
+    left.forEach((p) => {
+      let best = right[0];
+      let bestDist = Math.abs(best.y - p.y);
+      for (let i = 1; i < right.length; i += 1) {
+        const dist = Math.abs(right[i].y - p.y);
+        if (dist < bestDist) {
+          best = right[i];
+          bestDist = dist;
+        }
+      }
+      paths.push({ a: p, b: best });
+    });
+  }
+  paths.slice(0, 10).forEach(({ a, b }) => {
+    const midX = (a.x + b.x) / 2;
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", `M ${a.x} ${a.y} Q ${midX} ${a.y} ${b.x} ${b.y}`);
+    el.winLines.appendChild(path);
+  });
+  paths.slice(0, 10).forEach(({ a, b }) => {
+    const c1 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c1.setAttribute("cx", String(a.x));
+    c1.setAttribute("cy", String(a.y));
+    c1.setAttribute("r", "3.2");
+    el.winLines.appendChild(c1);
+    const c2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c2.setAttribute("cx", String(b.x));
+    c2.setAttribute("cy", String(b.y));
+    c2.setAttribute("r", "3.2");
+    el.winLines.appendChild(c2);
+  });
+}
+
 function cloneSymbol(symbol) {
   return { ...symbol };
 }
@@ -655,7 +715,7 @@ function drawReels(grid = makeGrid({ allowScatter: false }), winningCells = [], 
       } ${breaking && isWinning ? "breaking" : ""}`;
       if (landPop) {
         cell.classList.add("symbol--land-pop");
-        cell.style.setProperty("--sym-delay", `${columnIndex * 52 + rowIndex * 12}ms`);
+        cell.style.setProperty("--sym-delay", `${rowIndex * 90 + columnIndex * 6}ms`);
       }
       cell.innerHTML = tileFace(symbol);
       reel.appendChild(cell);
@@ -1036,6 +1096,7 @@ async function spin() {
 
   el.reels.classList.remove("spinning");
   el.reelsFrame?.classList.remove("reels-frame--spin");
+  renderWinLines([]);
   drawReels(grid, award > 0 ? scatterMatches : [], false, true);
 
   if (spinTarget === "near" && award === 0) {
@@ -1082,6 +1143,7 @@ async function spin() {
     el.lastWin.textContent = totalPayout.toLocaleString();
     el.resultText.textContent = `${isFreeSpin ? "Bonus " : ""}Menang x${multiplier}: ${payout.toLocaleString()} chip.`;
     drawReels(grid, winningCells);
+    renderWinLines(winningCells);
     const popVariant = payout >= spinBet * 18 || cascadeIndex >= 2 ? "burst" : "default";
     showWinPopup(payout, popVariant);
     if (cascadeIndex === 0) sfxSmallWin();
@@ -1093,6 +1155,7 @@ async function spin() {
     el.resultText.textContent = `Cascade x${multiplier}...`;
     await sleepAuto(isFreeSpin ? 480 : 400);
     el.reelsFrame?.classList.remove("cascade-settling");
+    renderWinLines([]);
     grid = makeCascadeGrid(grid, winningCells, { bonus: isFreeSpin, allowScatter: isFreeSpin });
     drawReels(grid, [], false, true);
     await sleepAuto(isFreeSpin ? 360 : 280);
