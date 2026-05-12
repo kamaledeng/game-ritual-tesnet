@@ -33,6 +33,7 @@ const saved = readSavedState();
 const state = {
   account: "",
   chainId: "",
+  ritualBalance: "0",
   chips: saved.chips,
   bet: saved.bet,
   selectedPackage: chipPackages[0],
@@ -43,8 +44,11 @@ const state = {
 
 const el = {
   networkStatus: document.querySelector("#networkStatus"),
+  ritualBalance: document.querySelector("#ritualBalance"),
+  sideRitualBalance: document.querySelector("#sideRitualBalance"),
   connectWallet: document.querySelector("#connectWallet"),
   chips: document.querySelector("#chips"),
+  remainingSpins: document.querySelector("#remainingSpins"),
   reels: document.querySelector("#reels"),
   resultText: document.querySelector("#resultText"),
   lastWin: document.querySelector("#lastWin"),
@@ -89,6 +93,31 @@ function saveState() {
 
 function shortAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function formatRitualBalance(hexBalance) {
+  const wei = BigInt(hexBalance || "0x0");
+  const whole = wei / 10n ** 18n;
+  const fraction = ((wei % 10n ** 18n) / 10n ** 14n).toString().padStart(4, "0");
+  const trimmed = fraction.replace(/0+$/, "");
+  return `${whole}${trimmed ? `.${trimmed}` : ""}`;
+}
+
+async function refreshWalletBalance() {
+  if (!window.ethereum || !state.account) {
+    state.ritualBalance = "0";
+    return;
+  }
+
+  try {
+    const balance = await window.ethereum.request({
+      method: "eth_getBalance",
+      params: [state.account, "latest"],
+    });
+    state.ritualBalance = formatRitualBalance(balance);
+  } catch {
+    state.ritualBalance = "0";
+  }
 }
 
 function log(message) {
@@ -183,16 +212,21 @@ function setBet(nextBet) {
 
 function render() {
   el.chips.textContent = state.chips.toLocaleString();
+  el.remainingSpins.textContent = Math.floor(state.chips / state.bet).toLocaleString();
   el.betLabel.textContent = state.bet.toLocaleString();
   el.spinCount.textContent = state.spinCount.toLocaleString();
   el.bestWin.textContent = state.bestWin.toLocaleString();
+  el.ritualBalance.textContent = `${state.ritualBalance} RITUAL`;
+  el.sideRitualBalance.textContent = `${state.ritualBalance} RITUAL`;
   el.spinButton.disabled = state.spinning || state.chips < state.bet;
 
   if (!state.account) {
     el.networkStatus.textContent = "Not connected";
+    el.connectWallet.hidden = false;
   } else {
     const chainLabel = state.chainId === RITUAL_CHAIN.chainId ? "Ritual" : `Chain ${state.chainId}`;
     el.networkStatus.textContent = `${chainLabel} · ${shortAddress(state.account)}`;
+    el.connectWallet.hidden = true;
   }
 
   renderBets();
@@ -223,6 +257,7 @@ async function connectWallet() {
     const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
     state.account = accounts[0] || "";
     state.chainId = await window.ethereum.request({ method: "eth_chainId" });
+    await refreshWalletBalance();
     render();
     log("Wallet connected. Kamu bisa beli chip dengan RITUAL testnet.");
   } catch (error) {
@@ -256,6 +291,7 @@ async function buyChips() {
     });
 
     state.chips += state.selectedPackage.chips;
+    await refreshWalletBalance();
     saveState();
     render();
     log(`Payment sent. Added ${state.selectedPackage.chips.toLocaleString()} chips. Tx: ${txHash}`);
@@ -314,10 +350,12 @@ el.increaseBet.addEventListener("click", () => {
 if (window.ethereum) {
   window.ethereum.on?.("accountsChanged", ([account]) => {
     state.account = account || "";
+    refreshWalletBalance().then(render);
     render();
   });
   window.ethereum.on?.("chainChanged", (chainId) => {
     state.chainId = chainId;
+    refreshWalletBalance().then(render);
     render();
   });
 }

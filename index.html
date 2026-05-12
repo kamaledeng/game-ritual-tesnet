@@ -19,7 +19,10 @@
             <h1>Bonanza Fruit</h1>
           </div>
           <div class="wallet-panel">
-            <div class="network-pill" id="networkStatus">Not connected</div>
+            <div class="wallet-card" id="walletCard">
+              <span id="networkStatus">Not connected</span>
+              <strong id="ritualBalance">0 RITUAL</strong>
+            </div>
             <button class="secondary-button" id="connectWallet" type="button">Connect Wallet</button>
           </div>
         </header>
@@ -34,6 +37,10 @@
               <div class="balance-box">
                 <span>Chip Balance</span>
                 <strong id="chips">0</strong>
+              </div>
+              <div class="balance-box balance-box--accent">
+                <span>Sisa Spin</span>
+                <strong id="remainingSpins">0</strong>
               </div>
             </div>
 
@@ -74,6 +81,10 @@
             <button class="buy-button" id="buyChipsButton" type="button">Buy Selected Package</button>
 
             <div class="stats-grid">
+              <div class="stat stat--wide">
+                <span>Wallet Balance</span>
+                <strong id="sideRitualBalance">0 RITUAL</strong>
+              </div>
               <div class="stat">
                 <span>Spins</span>
                 <strong id="spinCount">0</strong>

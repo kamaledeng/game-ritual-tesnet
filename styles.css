@@ -116,13 +116,25 @@ h3 {
   flex-wrap: wrap;
 }
 
-.network-pill {
-  min-height: 42px;
-  padding: 10px 14px;
+.wallet-card {
+  min-height: 54px;
+  min-width: 190px;
+  display: grid;
+  gap: 3px;
+  padding: 9px 14px;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: rgba(21, 29, 36, 0.9);
+}
+
+.wallet-card span {
   color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.wallet-card strong {
+  color: var(--green);
+  font-size: 1rem;
 }
 
 .game-layout {
@@ -149,6 +161,7 @@ h3 {
 .machine__header {
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .balance-box {
@@ -159,9 +172,13 @@ h3 {
   text-align: right;
 }
 
+.balance-box--accent {
+  border: 1px solid rgba(56, 207, 142, 0.38);
+  background: linear-gradient(180deg, rgba(56, 207, 142, 0.16), #0f171d);
+}
+
 .balance-box span,
 .stat span,
-.address-box span,
 .bet-readout span {
   display: block;
   color: var(--muted);
@@ -331,6 +348,19 @@ h3 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.stat--wide {
+  grid-column: 1 / -1;
+}
+
+.stat--wide strong {
+  color: var(--green);
+  font-size: 1.15rem;
+}
+
+[hidden] {
+  display: none !important;
 }
 
 .status-log {
