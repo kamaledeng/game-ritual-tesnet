@@ -138,9 +138,9 @@ function setSpinSpeed(next) {
   saveState();
   applySpinSpeedTheme();
   render();
-  if (next === "slow") log("Kecepatan Pelan — animasi & suara lebih panjang.");
-  else if (next === "turbo") log("Kecepatan Cepat — spin turbo, cascade ringkas.");
-  else log("Kecepatan Normal — ritme standar casino.");
+  if (next === "slow") log("Slow Speed — longer animation & sound.");
+  else if (next === "turbo") log("Fast Speed — turbo spin, compact cascade.");
+  else log("Normal Speed — standard casino rhythm.");
 }
 
 function readSavedSettings() {
@@ -577,7 +577,7 @@ function tileFace(symbol) {
       <span class="tile-scatter-halo" aria-hidden="true"></span>
       <span class="tile-corner tile-corner--scatter">${symbol.suitMark}</span>
       <span class="tile-main tile-main--scatter">${symbol.mark}</span>
-      <span class="tile-sub tile-sub--scatter">\u514d\u8cbb\u8f49</span>
+      <span class="tile-sub tile-sub--scatter">FREE SPIN</span>
     `;
   }
 
@@ -831,7 +831,7 @@ function render() {
 
 async function ensureRitualChain() {
   if (!window.ethereum) {
-    throw new Error("Wallet browser extension tidak ditemukan.");
+    throw new Error("Wallet browser extension not found.");
   }
 
   try {
@@ -857,7 +857,7 @@ async function connectWallet() {
     if (state.account) loadWalletState(state.account);
     await refreshWalletBalance();
     render();
-    log("Wallet connected. Kamu bisa beli chip dengan RITUAL testnet.");
+    log("Wallet connected. You can buy chips with RITUAL testnet.");
     resumeAudio();
   } catch (error) {
     log(error.message || "Wallet connection failed.");
@@ -903,7 +903,7 @@ async function spin() {
   if (state.spinning) return;
   if (!isConnectedToRitual()) {
     stopAutoSpin();
-    log("Connect wallet ke Ritual testnet dulu sebelum spin.");
+    log("Connect wallet to Ritual testnet first before spinning.");
     return;
   }
 
@@ -912,7 +912,7 @@ async function spin() {
 
   if (!isFreeSpin && state.chips < state.bet) {
     stopAutoSpin();
-    log("Chip tidak cukup. Beli chip dulu atau turunkan bet.");
+    log("Insufficient chips. Buy chips first or lower bet.");
     return;
   }
 
@@ -925,11 +925,11 @@ async function spin() {
   if (isFreeSpin) {
     state.freeSpinsRemaining -= 1;
     el.resultText.textContent = `Free Spin ${state.freeSpinsTotal - state.freeSpinsRemaining}/${state.freeSpinsTotal}.`;
-    showBonusBanner(`${state.freeSpinsRemaining} free spin tersisa. Multiplier bonus aktif.`);
+    showBonusBanner(`${state.freeSpinsRemaining} free spin remaining. Bonus multiplier active.`);
   } else {
     state.chips -= state.bet;
     state.spinCount += 1;
-    el.resultText.textContent = `Bet -${state.bet.toLocaleString()} chips. Gulungan berputar...`;
+    el.resultText.textContent = `Bet -${state.bet.toLocaleString()} chips. Reels spinning...`;
     flashChipDeduction();
     sfxChipDrop();
     for (let tick = 0; tick < 10; tick += 1) {
