@@ -11,7 +11,8 @@ const RITUAL_CHAIN = {
 };
 
 const OWNER_ADDRESS = "0xcf3da8d27bc354c8beb13a98205043e5c0967232";
-const STORAGE_KEY = "mahjong-fortune-ritual-state-v1";
+const SETTINGS_KEY = "ritual-mahjong-settings-v1";
+const WALLET_STORAGE_PREFIX = "ritual-mahjong-wallet-v1";
 const bets = [10, 20, 50, 100, 250, 500];
 const autoSpinOptions = [10, 50, 100];
 const BOARD_COLUMNS = 5;
@@ -33,16 +34,16 @@ const symbols = [
   { icon: "🀄", name: "wild", pay: 0, tone: "gold" },
 ];
 
-const saved = readSavedState();
+const saved = readSavedSettings();
 const state = {
   account: "",
   chainId: "",
   ritualBalance: "0",
-  chips: saved.chips,
+  chips: 0,
   bet: saved.bet,
   selectedPackage: chipPackages[0],
-  spinCount: saved.spinCount,
-  bestWin: saved.bestWin,
+  spinCount: 0,
+  bestWin: 0,
   spinning: false,
   autoSpinning: false,
   selectedAutoSpins: 10,
@@ -76,26 +77,55 @@ const el = {
   statusLog: document.querySelector("#statusLog"),
 };
 
-function readSavedState() {
+function readSavedSettings() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
     return {
-      chips: Number(parsed.chips || 0),
       bet: bets.includes(Number(parsed.bet)) ? Number(parsed.bet) : 20,
-      spinCount: Number(parsed.spinCount || 0),
-      bestWin: Number(parsed.bestWin || 0),
     };
   } catch {
-    return { chips: 0, bet: 20, spinCount: 0, bestWin: 0 };
+    return { bet: 20 };
   }
+}
+
+function walletStorageKey(account) {
+  return `${WALLET_STORAGE_PREFIX}-${account.toLowerCase()}`;
+}
+
+function loadWalletState(account) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(walletStorageKey(account)) || "{}");
+    state.chips = Number(parsed.chips || 0);
+    state.spinCount = Number(parsed.spinCount || 0);
+    state.bestWin = Number(parsed.bestWin || 0);
+  } catch {
+    state.chips = 0;
+    state.spinCount = 0;
+    state.bestWin = 0;
+  }
+}
+
+function resetWalletState() {
+  state.chips = 0;
+  state.spinCount = 0;
+  state.bestWin = 0;
+  state.ritualBalance = "0";
 }
 
 function saveState() {
   localStorage.setItem(
-    STORAGE_KEY,
+    SETTINGS_KEY,
+    JSON.stringify({
+      bet: state.bet,
+    }),
+  );
+
+  if (!state.account) return;
+
+  localStorage.setItem(
+    walletStorageKey(state.account),
     JSON.stringify({
       chips: state.chips,
-      bet: state.bet,
       spinCount: state.spinCount,
       bestWin: state.bestWin,
     }),
@@ -379,6 +409,7 @@ async function connectWallet() {
     const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
     state.account = accounts[0] || "";
     state.chainId = await window.ethereum.request({ method: "eth_chainId" });
+    if (state.account) loadWalletState(state.account);
     await refreshWalletBalance();
     render();
     log("Wallet connected. Kamu bisa beli chip dengan RITUAL testnet.");
@@ -552,6 +583,12 @@ el.increaseBet.addEventListener("click", () => {
 if (window.ethereum) {
   window.ethereum.on?.("accountsChanged", ([account]) => {
     state.account = account || "";
+    if (state.account) {
+      loadWalletState(state.account);
+    } else {
+      resetWalletState();
+      stopAutoSpin();
+    }
     refreshWalletBalance().then(render);
     render();
   });

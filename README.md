@@ -1,10 +1,11 @@
-# Mahjong Fortune Ritual
+# Ritual Mahjong Ways
 
 Static mahjong slot-style game for Ritual testnet. Players buy demo chips by sending Ritual testnet tokens to the configured owner address, then use those chips to spin.
 
 ## Features
 
-- One mahjong slot game: Mahjong Fortune II
+- One mahjong slot game: Ritual Mahjong Ways
+- Chip balances are stored per connected wallet address
 - Chip cashier using Ritual testnet wallet transactions
 - Owner payment address: `0xcf3da8d27bc354c8beb13a98205043e5c0967232`
 - Quick bet controls: `10`, `20`, `50`, `100`, `250`, `500`
