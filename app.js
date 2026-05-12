@@ -637,15 +637,41 @@ function makeCascadeGrid(grid, winningCells, options = {}) {
   });
 }
 
+function makeForcedWinGrid(options = {}) {
+  const grid = makeGrid(options);
+  const symbol = pickPayingWeightedSymbol();
+  
+  // Create a guaranteed 3-symbol win on first 3 reels
+  for (let col = 0; col < 3; col++) {
+    const row = Math.floor(Math.random() * BOARD_ROWS);
+    grid[col][row] = cloneSymbol(symbol);
+  }
+  
+  return grid;
+}
+
 function makeControlledCascadeGrid(grid, winningCells, allowFollowUp, options = {}) {
   if (allowFollowUp) return makeCascadeGrid(grid, winningCells, options);
 
-  for (let attempt = 0; attempt < 40; attempt += 1) {
-    const nextGrid = makeCascadeGrid(grid, winningCells, options);
-    if (calculateWin(nextGrid, 1).payout === 0) return nextGrid;
+  // For cascade 1: 70% chance to allow follow-up
+  // For cascade 2: 40% chance to allow follow-up  
+  // For cascade 3: 15% chance to allow follow-up
+  const followUpChance = options.cascadeIndex === 0 ? 0.7 : 
+                        options.cascadeIndex === 1 ? 0.4 : 0.15;
+  
+  if (Math.random() < followUpChance) {
+    return makeCascadeGrid(grid, winningCells, options);
   }
 
-  return makeDeadGrid(options);
+  // Try to create a cascade with smaller wins
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const nextGrid = makeCascadeGrid(grid, winningCells, options);
+    const result = calculateWin(nextGrid, 1);
+    // Allow small wins instead of zero
+    if (result.payout <= options.betAmount * 0.3) return nextGrid;
+  }
+
+  return makeCascadeGrid(grid, winningCells, options);
 }
 
 function calculateWin(grid, multiplier = 1, betAmount = state.bet) {
@@ -995,7 +1021,28 @@ async function spin() {
   while (cascadeIndex < multipliers.length) {
     const multiplier = multipliers[cascadeIndex];
     const { payout, winningCells } = calculateWin(grid, multiplier, spinBet);
-    if (payout <= 0 || winningCells.length === 0) break;
+    
+    // Force at least 2 cascades for any win, and chance for 3rd
+    if (payout <= 0 || winningCells.length === 0) {
+      // If first cascade and no win, force a small win
+      if (cascadeIndex === 0 && totalPayout === 0) {
+        const forcedGrid = makeForcedWinGrid(options);
+        grid = forcedGrid;
+        const forcedResult = calculateWin(grid, multiplier, spinBet);
+        if (forcedResult.payout > 0) {
+          totalPayout += forcedResult.payout;
+          el.lastWin.textContent = totalPayout.toLocaleString();
+          el.resultText.textContent = `${isFreeSpin ? "Bonus " : ""}Win x${multiplier}: ${forcedResult.payout.toLocaleString()} chips.`;
+          drawReels(grid, forcedResult.winningCells);
+          showWinPopup(forcedResult.payout, "default");
+          sfxSmallWin();
+          await sleep(isFreeSpin ? 420 : 340);
+          cascadeIndex += 1;
+          continue;
+        }
+      }
+      break;
+    }
 
     sfxMultiplierPing(cascadeIndex);
     renderMultiplier(cascadeIndex, isFreeSpin);
@@ -1017,18 +1064,20 @@ async function spin() {
     el.reelsFrame?.classList.remove("cascade-settling");
     const followUpChance = isFreeSpin
       ? cascadeIndex === 0
-        ? 0.125
+        ? 0.45  // Increased from 0.125
         : cascadeIndex === 1
-          ? 0.058
-          : 0.02
+          ? 0.25  // Increased from 0.058
+          : 0.12  // Increased from 0.02
       : cascadeIndex === 0
-        ? 0.108
+        ? 0.35  // Increased from 0.108
         : cascadeIndex === 1
-          ? 0.038
-          : 0.013;
+          ? 0.18  // Increased from 0.038
+          : 0.08; // Increased from 0.013
     grid = makeControlledCascadeGrid(grid, winningCells, Math.random() < followUpChance, {
       bonus: isFreeSpin,
       allowScatter: isFreeSpin,
+      cascadeIndex,
+      betAmount: spinBet
     });
     drawReels(grid);
     await sleep(isFreeSpin ? 360 : 280);
