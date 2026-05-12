@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Ritual Mahjong Ways: Fan Testnet Demo, a mahjong slot-style testnet chip game."
+    />
+    <title>Ritual Mahjong Ways: Fan Testnet Demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="play-surface" aria-label="Ritual Mahjong Ways">
+        <header class="topbar">
+          <div class="player-badge" aria-label="Player">
+            <a
+              class="avatar"
+              href="https://www.ritualfoundation.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open Ritual Foundation website"
+            >
+              <img src="./assets/ritual-logo.png" alt="Ritual Mahjong logo" />
+            </a>
+            <button class="hud-icon" type="button" title="Games">▦</button>
+          </div>
+
+          <div class="coin-meter">
+            <span>Saldo Chip</span>
+            <strong id="chips">0</strong>
+          </div>
+
+          <div class="wallet-panel">
+            <div class="wallet-card" id="walletCard">
+              <span id="networkStatus">Not connected</span>
+              <strong id="ritualBalance">0 RITUAL</strong>
+            </div>
+            <button class="secondary-button" id="connectWallet" type="button">Connect Wallet</button>
+          </div>
+        </header>
+
+        <div class="game-title">
+          <a
+            class="brand-logo"
+            href="https://www.ritualfoundation.org/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open Ritual Foundation website"
+          >
+            <img src="./assets/ritual-logo.png" alt="Ritual Mahjong logo" />
+          </a>
+          <p>Fan Testnet Demo</p>
+          <h1>Ritual Mahjong Ways</h1>
+          <span>Unofficial Cascade Slot</span>
+        </div>
+
+        <div class="game-layout">
+          <section class="machine" aria-label="Mahjong slot machine">
+            <div class="multiplier-track" aria-label="Multiplier">
+              <strong class="active">x1</strong>
+              <strong>x2</strong>
+              <strong>x3</strong>
+              <strong>x5</strong>
+            </div>
+
+            <div class="machine__header">
+              <div class="balance-box balance-box--accent">
+                <span>Sisa Spin</span>
+                <strong id="remainingSpins">0</strong>
+              </div>
+              <div class="balance-box balance-box--bonus">
+                <span>Free Spins</span>
+                <strong id="freeSpinCounter">0</strong>
+              </div>
+              <div class="balance-box">
+                <span>Last Win</span>
+                <strong id="lastWin">0</strong>
+              </div>
+            </div>
+
+            <div class="bonus-banner" id="bonusBanner" hidden>
+              <strong>Golden Dragon Free Spins</strong>
+              <span id="bonusText">3 scatter membuka bonus round.</span>
+            </div>
+
+            <div
+              id="cinematicOverlay"
+              class="cinematic-overlay"
+              hidden
+              aria-hidden="true"
+            ></div>
+            <div id="winPopupLayer" class="win-popup-layer" aria-live="polite"></div>
+
+            <div class="reels-frame">
+              <div class="reels" id="reels" aria-live="polite"></div>
+            </div>
+
+            <div class="result-strip">
+              <span id="resultText">Beli chip dengan RITUAL testnet untuk mulai spin.</span>
+            </div>
+
+            <div class="bottom-console">
+              <button class="round-button" id="decreaseBet" type="button">-</button>
+              <div class="bet-readout">
+                <span>Total Bet</span>
+                <strong id="betLabel">500</strong>
+              </div>
+              <button class="round-button" id="increaseBet" type="button">+</button>
+              <button class="turbo-button" id="maxBetButton" type="button">Max</button>
+              <button class="spin-button" id="spinButton" type="button">Spin</button>
+              <button class="auto-button" id="autoSpinButton" type="button">Auto</button>
+            </div>
+
+            <div class="quick-bets" id="quickBets" aria-label="Quick bets"></div>
+            <div class="auto-options" id="autoOptions" aria-label="Auto spin options"></div>
+          </section>
+
+          <aside class="cashier-panel" aria-label="Chip cashier">
+            <div class="panel-block">
+              <p class="panel-kicker">Cashier</p>
+              <h3>Buy Chips</h3>
+              <p class="small-copy">
+                Kirim RITUAL testnet, lalu chip masuk ke saldo game.
+              </p>
+            </div>
+
+            <div class="package-list" id="packageList"></div>
+
+            <button class="buy-button" id="buyChipsButton" type="button">Buy Selected Package</button>
+
+            <div class="stats-grid">
+              <div class="stat stat--wide">
+                <span>Wallet Balance</span>
+                <strong id="sideRitualBalance">0 RITUAL</strong>
+              </div>
+              <div class="stat">
+                <span>Spins</span>
+                <strong id="spinCount">0</strong>
+              </div>
+              <div class="stat">
+                <span>Best Win</span>
+                <strong id="bestWin">0</strong>
+              </div>
+            </div>
+
+            <div class="status-log" id="statusLog">Ready.</div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
