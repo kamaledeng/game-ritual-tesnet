@@ -1031,7 +1031,7 @@ async function ensureRitualChain() {
   if (!window.ethereum) {
     const fileUrlHint =
       window.location?.protocol === "file:"
-        ? " Kalau kamu buka via file://, aktifkan izin extension untuk File URLs atau jalankan via local server (http://localhost)."
+        ? " If you're opening via file://, allow the extension to access File URLs or run a local server (http://localhost)."
         : "";
     throw new Error(`Wallet browser extension not found.${fileUrlHint}`);
   }
@@ -1152,7 +1152,7 @@ async function spin() {
   const spinMs = isFreeSpin ? 1180 : 980;
   await sleep(spinMs * 0.42);
   pulseReelStopPhase();
-  el.resultText.textContent = isFreeSpin ? "Golden Dragon reels..." : "Hampir berhenti...";
+  el.resultText.textContent = isFreeSpin ? "Golden Dragon reels..." : "Slowing down...";
   await sleep(spinMs * 0.38);
 
   const { grid: builtGrid, target: spinTarget } = buildSpinGrid({ bonus: isFreeSpin, allowScatter: true });
@@ -1182,7 +1182,7 @@ async function spin() {
     if (isFreeSpin) {
       state.freeSpinsRemaining += award;
       state.freeSpinsTotal += award;
-      showBonusBanner(`Retrigger +${award} free spins dari Golden Dragon scatter.`);
+      showBonusBanner(`Retrigger +${award} free spins from Golden Dragon scatters.`);
       log(`Bonus retrigger +${award} free spins.`);
     } else {
       state.freeSpinsRemaining += award;
@@ -1190,8 +1190,8 @@ async function spin() {
       state.freeSpinWin = 0;
       state.bonusActive = true;
       state.lastFreeSpinBet = spinBet;
-      showBonusBanner(`${scatterMatches.length} scatter \u91d1\u9f8d: ${award} free spin terbuka.`);
-      log(`${award} Free Spins aktif. Spin gratis memakai bet ${spinBet.toLocaleString()} chips.`);
+      showBonusBanner(`${scatterMatches.length} Golden Dragon scatters: ${award} free spins unlocked.`);
+      log(`${award} Free Spins active. Free spins use bet ${spinBet.toLocaleString()} chips.`);
     }
     render();
     await sleepAuto(820);
@@ -1210,7 +1210,7 @@ async function spin() {
     totalPayout += payout;
     if (isFreeSpin) state.freeSpinWin += payout;
     el.lastWin.textContent = totalPayout.toLocaleString();
-    el.resultText.textContent = `${isFreeSpin ? "Bonus " : ""}Menang x${multiplier}: ${payout.toLocaleString()} chip.`;
+    el.resultText.textContent = `${isFreeSpin ? "Bonus " : ""}Win x${multiplier}: ${payout.toLocaleString()} chips.`;
     drawReels(grid, winningCells);
     renderWinLines(winningCells);
     const popVariant = payout >= spinBet * 18 || cascadeIndex >= 2 ? "burst" : "default";
@@ -1253,14 +1253,14 @@ async function spin() {
   el.lastWin.textContent = totalPayout.toLocaleString();
   el.resultText.textContent =
     totalPayout > 0
-      ? `${isFreeSpin ? "Bonus total" : "Total menang"} ${totalPayout.toLocaleString()} chips.`
+      ? `${isFreeSpin ? "Total bonus" : "Total win"} ${totalPayout.toLocaleString()} chips.`
       : award > 0
-        ? "Bonus siap. Free spins dimulai otomatis."
+        ? "Bonus ready. Free spins start automatically."
         : state.deadStreak >= 4
-          ? "Dead spin. Polanya dingin sebentar."
+          ? "Dead spin. The reels are cold for a moment."
           : spinTarget === "near"
-            ? "Nyaris kena. Satu langkah lagi."
-            : "Tanpa kemenangan kali ini.";
+            ? "So close. One more step."
+            : "No win this time.";
   renderMultiplier(-1, hasActiveFreeSpin());
   saveState();
   render();
@@ -1308,23 +1308,23 @@ function stopAutoSpin() {
 function toggleAutoSpin() {
   if (state.autoSpinning) {
     stopAutoSpin();
-    log("Auto Spin berhenti.");
+    log("Auto Spin stopped.");
     return;
   }
   
   if (state.chips < state.bet) {
-    log("Chip tidak cukup untuk Auto Spin.");
+    log("Not enough chips for Auto Spin.");
     return;
   }
 
   if (!isConnectedToRitual()) {
-    log("Connect wallet ke Ritual testnet dulu sebelum Auto Spin.");
+    log("Connect your wallet to Ritual testnet before Auto Spin.");
     return;
   }
 
   state.autoSpinning = true;
   state.autoRemaining = state.selectedAutoSpins;
-  log(`Auto Spin ${state.selectedAutoSpins} aktif.`);
+  log(`Auto Spin ${state.selectedAutoSpins} started.`);
   render();
   spin();
 }
