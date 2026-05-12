@@ -1439,6 +1439,11 @@ html[data-connected="false"] .secondary-button {
   font-size: 1.15rem;
 }
 
+.stat--chips strong {
+  color: #fff0bd;
+  font-size: 1.45rem;
+}
+
 [hidden] {
   display: none !important;
 }
