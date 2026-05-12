@@ -995,9 +995,12 @@ html[data-connected="false"] .secondary-button {
 }
 
 .tile-logo {
-  width: 62%;
-  height: 62%;
+  width: 42px;
+  height: 42px;
+  max-width: 60%;
+  max-height: 60%;
   object-fit: contain;
+  border-radius: 10px;
 }
 
 .tile-logo--scatter {
@@ -2001,6 +2004,11 @@ html[data-connected="false"] .secondary-button {
   .spin-button {
     grid-column: 1 / -1;
     justify-self: center;
+  }
+
+  .tile-logo {
+    width: 36px;
+    height: 36px;
   }
 
   .creator-badge {
