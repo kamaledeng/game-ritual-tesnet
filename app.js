@@ -990,6 +990,7 @@ function canPlay() {
 }
 
 function render() {
+  document.documentElement.dataset.connected = isConnectedToRitual() ? "true" : "false";
   el.chips.textContent = state.chips.toLocaleString();
   el.remainingSpins.textContent = Math.floor(state.chips / state.bet).toLocaleString();
   el.freeSpinCounter.textContent = state.freeSpinsRemaining.toLocaleString();
