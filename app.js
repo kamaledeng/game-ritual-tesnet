@@ -167,7 +167,11 @@ function log(message) {
 }
 
 function randomSymbol() {
-  return symbols[Math.floor(Math.random() * symbols.length)];
+  const roll = Math.random();
+  if (roll > 0.987) return symbols.find((symbol) => symbol.name === "wild");
+
+  const payingSymbols = symbols.filter((symbol) => symbol.pay > 0);
+  return payingSymbols[Math.floor(Math.random() * payingSymbols.length)];
 }
 
 function makeGrid() {
@@ -225,24 +229,25 @@ function chooseSpinTarget() {
   const roll = Math.random();
 
   if (state.deadStreak >= 5) {
-    if (roll < 0.45) return "near";
-    if (roll < 0.78) return "small";
-    if (roll < 0.94) return "medium";
+    if (roll < 0.42) return "dead";
+    if (roll < 0.73) return "near";
+    if (roll < 0.925) return "small";
+    if (roll < 0.992) return "medium";
     return "big";
   }
 
   if (state.deadStreak >= 3) {
-    if (roll < 0.36) return "dead";
-    if (roll < 0.66) return "near";
-    if (roll < 0.88) return "small";
-    if (roll < 0.98) return "medium";
+    if (roll < 0.54) return "dead";
+    if (roll < 0.80) return "near";
+    if (roll < 0.945) return "small";
+    if (roll < 0.994) return "medium";
     return "big";
   }
 
-  if (roll < 0.58) return "dead";
-  if (roll < 0.82) return "near";
-  if (roll < 0.95) return "small";
-  if (roll < 0.992) return "medium";
+  if (roll < 0.67) return "dead";
+  if (roll < 0.90) return "near";
+  if (roll < 0.982) return "small";
+  if (roll < 0.998) return "medium";
   return "big";
 }
 
@@ -256,12 +261,13 @@ function buildSpinGrid() {
   const grid = makeGrid();
   const matchSymbol = pickPayingSymbol();
   const matchReels =
-    target === "small" ? 3 : target === "medium" ? (roll < 0.6 ? 3 : 4) : roll < 0.55 ? 4 : 5;
-  const minPerReel = target === "small" ? 1 : target === "medium" ? 1 : 2;
+    target === "small" ? 3 : target === "medium" ? (roll < 0.72 ? 3 : 4) : roll < 0.64 ? 4 : 5;
+  const minPerReel = target === "big" ? 2 : 1;
 
   for (let column = 0; column < matchReels; column += 1) {
     const usedRows = new Set();
-    const targetRows = Math.min(BOARD_ROWS, minPerReel + (Math.random() > 0.55 ? 1 : 0));
+    const extraRowChance = target === "small" ? 0.18 : target === "medium" ? 0.34 : 0.52;
+    const targetRows = Math.min(BOARD_ROWS, minPerReel + (Math.random() < extraRowChance ? 1 : 0));
     while (usedRows.size < targetRows) {
       const row = Math.floor(Math.random() * BOARD_ROWS);
       if (!usedRows.has(row)) {
@@ -273,7 +279,8 @@ function buildSpinGrid() {
 
   if (target === "big") {
     const wild = symbols.find((symbol) => symbol.name === "wild");
-    for (let count = 0; count < 3; count += 1) {
+    const wildCount = Math.random() < 0.72 ? 1 : 2;
+    for (let count = 0; count < wildCount; count += 1) {
       grid[Math.floor(Math.random() * BOARD_COLUMNS)][Math.floor(Math.random() * BOARD_ROWS)] =
         cloneSymbol(wild);
     }
@@ -383,7 +390,7 @@ function calculateWin(grid, multiplier = 1) {
 
     if (streak >= 3) {
       cellsForSymbol.forEach((key) => winningCells.add(key));
-      payout += Math.max(state.bet, Math.floor((state.bet * symbol.pay * ways * multiplier) / 20));
+      payout += Math.max(1, Math.floor((state.bet * symbol.pay * ways * multiplier) / 8.8));
     }
   }
 
@@ -610,7 +617,7 @@ async function spin() {
     drawReels(grid, winningCells, true);
     el.resultText.textContent = `Pecah x${multiplier}, cascade lanjut...`;
     await new Promise((resolve) => setTimeout(resolve, 430));
-    const followUpChance = cascadeIndex === 0 ? 0.16 : cascadeIndex === 1 ? 0.08 : 0.035;
+    const followUpChance = cascadeIndex === 0 ? 0.055 : cascadeIndex === 1 ? 0.022 : 0.008;
     grid = makeControlledCascadeGrid(grid, winningCells, Math.random() < followUpChance);
     drawReels(grid);
     await new Promise((resolve) => setTimeout(resolve, 260));
