@@ -15,7 +15,7 @@ Static mahjong slot-style game for Ritual testnet. Players buy demo chips by sen
 - Traditional-looking tile faces with characters, dots, bamboo, winds, dragons, and ivory styling
 - Premium casino UI skin with dark wood, gold, jade, ivory, lighting, and polished controls
 - Cascading wins with multiplier steps `x1`, `x2`, `x3`, `x5`
-- Golden Dragon scatter symbol that can trigger balanced free spins when 3 or more land
+- Ritual logo scatter symbol that can trigger balanced free spins when 3 or more land
 - Free spin bonus round with enhanced multipliers, retriggers kept rare, bonus counter, and cinematic notifications
 - Balanced casino rhythm with dead spins, near misses, rarer wins, and less frequent multiplier cascades
 - Simulated front-end math is tuned toward roughly 94-96% RTP behavior for testnet play

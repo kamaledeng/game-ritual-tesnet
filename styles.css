@@ -994,6 +994,16 @@ html[data-connected="false"] .secondary-button {
   filter: drop-shadow(0 2px 0 rgba(255, 255, 255, 0.35));
 }
 
+.tile-logo {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+}
+
+.tile-logo--scatter {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.28));
+}
+
 .tile-sub--scatter {
   font-size: 0.62rem;
   letter-spacing: 0.04em;

@@ -96,13 +96,13 @@ const symbols = [
   { name: "white-dragon", suit: "dragon", rank: 0, pay: 25, tone: "blue", mark: "\u767d", suitMark: "\u9f8d" },
   { name: "wild", suit: "wild", rank: 0, pay: 0, tone: "gold", mark: "\u767e\u642d", suitMark: "WILD" },
   {
-    name: "gold-dragon-scatter",
+    name: "ritual-logo-scatter",
     suit: "scatter",
     rank: 0,
     pay: 0,
     tone: "scatter",
-    mark: "\u9f8d",
-    suitMark: "\u91d1",
+    mark: "",
+    suitMark: "RITUAL",
     scatter: true,
   },
 ];
@@ -575,7 +575,7 @@ function randomSymbol(options = {}) {
   const scatterChance = symbolChances.scatter;
   const wildChance = symbolChances.wild;
 
-  if (allowScatter && roll < scatterChance) return cloneSymbol(getSymbol("gold-dragon-scatter"));
+  if (allowScatter && roll < scatterChance) return cloneSymbol(getSymbol("ritual-logo-scatter"));
   if (roll < scatterChance + wildChance) return cloneSymbol(getSymbol("wild"));
 
   return cloneSymbol(pickPayingWeightedSymbol());
@@ -708,7 +708,7 @@ function buildSpinGrid(options = {}) {
 
 function makeScatterTriggerGrid() {
   const grid = makeDeadGrid({ allowScatter: false });
-  const scatter = getSymbol("gold-dragon-scatter");
+  const scatter = getSymbol("ritual-logo-scatter");
   const positions = new Set();
   while (positions.size < 3) {
     positions.add(cellKey(Math.floor(Math.random() * BOARD_COLUMNS), Math.floor(Math.random() * BOARD_ROWS)));
@@ -737,8 +737,8 @@ function tileFace(symbol) {
     return `
       <span class="tile-scatter-halo" aria-hidden="true"></span>
       <span class="tile-corner tile-corner--scatter">${symbol.suitMark}</span>
-      <span class="tile-main tile-main--scatter">${symbol.mark}</span>
-      <span class="tile-sub tile-sub--scatter">FREE SPIN</span>
+      <img class="tile-logo tile-logo--scatter" src="./assets/ritual-logo.png" alt="Ritual logo" />
+      <span class="tile-sub tile-sub--scatter">FREE SPINS</span>
     `;
   }
 
@@ -1229,7 +1229,7 @@ async function spin() {
   const spinMs = isFreeSpin ? 1180 : 980;
   await sleep(spinMs * 0.42);
   pulseReelStopPhase();
-  el.resultText.textContent = isFreeSpin ? "Golden Dragon reels..." : "Slowing down...";
+  el.resultText.textContent = isFreeSpin ? "Ritual reels..." : "Slowing down...";
   await sleep(spinMs * 0.38);
 
   const { grid: builtGrid, target: spinTarget } = buildSpinGrid({ bonus: isFreeSpin, allowScatter: true });
@@ -1259,7 +1259,7 @@ async function spin() {
     if (isFreeSpin) {
       state.freeSpinsRemaining += award;
       state.freeSpinsTotal += award;
-      showBonusBanner(`Retrigger +${award} free spins from Golden Dragon scatters.`);
+      showBonusBanner(`Retrigger +${award} free spins from Ritual Logo scatters.`);
       log(`Bonus retrigger +${award} free spins.`);
     } else {
       state.freeSpinsRemaining += award;
@@ -1267,7 +1267,7 @@ async function spin() {
       state.freeSpinWin = 0;
       state.bonusActive = true;
       state.lastFreeSpinBet = spinBet;
-      showBonusBanner(`${scatterMatches.length} Golden Dragon scatters: ${award} free spins unlocked.`);
+      showBonusBanner(`${scatterMatches.length} Ritual Logo scatters: ${award} free spins unlocked.`);
       log(`${award} Free Spins active. Free spins use bet ${spinBet.toLocaleString()} chips.`);
     }
     render();
