@@ -22,19 +22,13 @@ Static slot-style demo game for Ritual testnet. The game uses original themes in
 
 Open `index.html` directly in a browser, or serve the folder with any static server.
 
-If you have Node tooling available:
-
-```bash
-node server.js
-```
-
 ## Deploy to Vercel via GitHub
 
 1. Push this folder to a GitHub repository.
 2. In Vercel, import the repository.
-3. Use the default static project settings.
+3. Use framework preset `Other`.
 4. Leave build command empty.
-5. Leave output directory as project root.
+5. Leave output directory empty or use `./`.
 
 ## Notes
 

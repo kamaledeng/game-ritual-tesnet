@@ -2,8 +2,5 @@
   "name": "ritual-arcade-slots",
   "version": "0.1.0",
   "private": true,
-  "description": "Static slot-style demo game for Ritual testnet.",
-  "scripts": {
-    "start": "node server.js"
-  }
+  "description": "Static slot-style demo game for Ritual testnet."
 }
