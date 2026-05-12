@@ -128,6 +128,14 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, spinDelay(ms)));
 }
 
+function sleepAuto(ms) {
+  // Faster sleep for auto spin mode
+  if (state.autoSpinning) {
+    return new Promise((resolve) => setTimeout(resolve, Math.max(8, Math.round(ms * spinSpeedFactor() * 0.4))));
+  }
+  return sleep(ms);
+}
+
 function applySpinSpeedTheme() {
   document.documentElement.dataset.spinSpeed = state.spinSpeed;
 }
@@ -991,14 +999,14 @@ async function spin() {
   if (spinTarget === "near" && award === 0) {
     setNearMissSuspense(true);
     sfxNearMiss();
-    await sleep(680);
+    await sleepAuto(680);
     setNearMissSuspense(false);
   }
 
   if (award > 0) {
     showScatterCinematic();
     sfxScatterFanfare();
-    await sleep(520);
+    await sleepAuto(520);
     if (isFreeSpin) {
       const retrigger = Math.min(5, Math.ceil(award / 3));
       state.freeSpinsRemaining += retrigger;
@@ -1015,7 +1023,7 @@ async function spin() {
       log(`${award} Free Spins aktif. Spin gratis memakai bet ${spinBet.toLocaleString()} chips.`);
     }
     render();
-    await sleep(820);
+    await sleepAuto(820);
   }
 
   while (cascadeIndex < multipliers.length) {
@@ -1055,12 +1063,12 @@ async function spin() {
     showWinPopup(payout, popVariant);
     if (cascadeIndex === 0) sfxSmallWin();
     else sfxCascade();
-    await sleep(isFreeSpin ? 420 : 340);
+    await sleepAuto(isFreeSpin ? 420 : 340);
 
     el.reelsFrame?.classList.add("cascade-settling");
     drawReels(grid, winningCells, true);
     el.resultText.textContent = `Cascade x${multiplier}...`;
-    await sleep(isFreeSpin ? 480 : 400);
+    await sleepAuto(isFreeSpin ? 480 : 400);
     el.reelsFrame?.classList.remove("cascade-settling");
     const followUpChance = isFreeSpin
       ? cascadeIndex === 0
@@ -1080,7 +1088,7 @@ async function spin() {
       betAmount: spinBet
     });
     drawReels(grid);
-    await sleep(isFreeSpin ? 360 : 280);
+    await sleepAuto(isFreeSpin ? 360 : 280);
     cascadeIndex += 1;
   }
 
@@ -1140,7 +1148,8 @@ async function spin() {
       stopAutoSpin();
       log("Auto Spin selesai.");
     } else if (state.chips >= state.bet) {
-      state.autoTimer = window.setTimeout(spin, spinDelay(940));
+      // Much faster auto spin delay
+      state.autoTimer = window.setTimeout(spin, state.autoSpinning ? 200 : spinDelay(940));
     } else {
       stopAutoSpin();
       log("Auto Spin berhenti karena chip tidak cukup.");
