@@ -11,7 +11,7 @@ const RITUAL_CHAIN = {
 };
 
 const OWNER_ADDRESS = "0xcf3da8d27bc354c8beb13a98205043e5c0967232";
-const STORAGE_KEY = "bonanza-fruit-ritual-state-v1";
+const STORAGE_KEY = "mahjong-fortune-ritual-state-v1";
 const bets = [10, 20, 50, 100, 250, 500];
 const chipPackages = [
   { ritual: "0.01", chips: 1000 },
@@ -20,13 +20,13 @@ const chipPackages = [
 ];
 
 const symbols = [
-  { icon: "🍌", name: "banana", pay: 3 },
-  { icon: "🍇", name: "grape", pay: 4 },
-  { icon: "🍓", name: "strawberry", pay: 5 },
-  { icon: "🍉", name: "melon", pay: 6 },
-  { icon: "🍍", name: "pineapple", pay: 8 },
-  { icon: "💎", name: "diamond", pay: 12 },
-  { icon: "🍭", name: "scatter", pay: 0 },
+  { icon: "萬", name: "wan", pay: 3, tone: "red" },
+  { icon: "筒", name: "tong", pay: 4, tone: "blue" },
+  { icon: "索", name: "suo", pay: 5, tone: "green" },
+  { icon: "東", name: "east", pay: 6, tone: "purple" },
+  { icon: "中", name: "red-dragon", pay: 8, tone: "red" },
+  { icon: "發", name: "fortune", pay: 12, tone: "gold" },
+  { icon: "🀄", name: "wild", pay: 0, tone: "gold" },
 ];
 
 const saved = readSavedState();
@@ -139,7 +139,9 @@ function drawReels(grid = makeGrid(), winningNames = []) {
     reel.className = "reel";
     column.forEach((symbol) => {
       const cell = document.createElement("div");
-      cell.className = `symbol ${winningNames.includes(symbol.name) ? "win" : ""}`;
+      cell.className = `symbol symbol--${symbol.tone} ${
+        winningNames.includes(symbol.name) ? "win" : ""
+      }`;
       cell.textContent = symbol.icon;
       reel.appendChild(cell);
     });
@@ -163,10 +165,10 @@ function calculateWin(grid) {
     }
   }
 
-  const scatters = grid.flat().filter((symbol) => symbol.name === "scatter").length;
-  if (scatters >= 4) {
-    payout += state.bet * scatters * 4;
-    winningNames.push("scatter");
+  const wilds = grid.flat().filter((symbol) => symbol.name === "wild").length;
+  if (wilds >= 3) {
+    payout += state.bet * wilds * 5;
+    winningNames.push("wild");
   }
 
   return { payout, winningNames };
@@ -328,7 +330,7 @@ async function spin() {
   el.reels.classList.remove("spinning");
   el.lastWin.textContent = payout.toLocaleString();
   el.resultText.textContent =
-    payout > 0 ? `Win ${payout.toLocaleString()} chips.` : "Belum menang, coba spin lagi.";
+    payout > 0 ? `Menang ${payout.toLocaleString()} chips.` : "Belum menang, coba spin lagi.";
 
   saveState();
   render();

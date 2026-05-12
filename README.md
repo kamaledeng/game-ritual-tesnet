@@ -1,14 +1,14 @@
-# Bonanza Fruit Ritual
+# Mahjong Fortune Ritual
 
-Static fruit slot-style game for Ritual testnet. Players buy demo chips by sending Ritual testnet tokens to the configured owner address, then use those chips to spin.
+Static mahjong slot-style game for Ritual testnet. Players buy demo chips by sending Ritual testnet tokens to the configured owner address, then use those chips to spin.
 
 ## Features
 
-- One fruit slot game: Bonanza Fruit
+- One mahjong slot game: Mahjong Fortune II
 - Chip cashier using Ritual testnet wallet transactions
 - Owner payment address: `0xcf3da8d27bc354c8beb13a98205043e5c0967232`
 - Quick bet controls: `10`, `20`, `50`, `100`, `250`, `500`
-- 6x5 fruit reels with cluster-style payouts
+- 6x5 mahjong tile reels with cluster-style payouts
 - Wallet connect with Ritual testnet chain config
 - Static deployment path for GitHub and Vercel
 

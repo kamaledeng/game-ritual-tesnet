@@ -5,19 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Bonanza Fruit, slot-style Ritual testnet chip game."
+      content="Mahjong Fortune, slot-style Ritual testnet chip game."
     />
-    <title>Bonanza Fruit Ritual</title>
+    <title>Mahjong Fortune Ritual</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="app-shell">
-      <section class="play-surface" aria-label="Bonanza Fruit Ritual">
+      <section class="play-surface" aria-label="Mahjong Fortune Ritual">
         <header class="topbar">
-          <div>
-            <p class="eyebrow">Ritual Testnet Slot</p>
-            <h1>Bonanza Fruit</h1>
+          <div class="player-badge" aria-label="Player">
+            <div class="avatar">M</div>
+            <button class="hud-icon" type="button" title="Games">▦</button>
           </div>
+
+          <div class="coin-meter">
+            <span>Saldo Chip</span>
+            <strong id="chips">0</strong>
+          </div>
+
           <div class="wallet-panel">
             <div class="wallet-card" id="walletCard">
               <span id="networkStatus">Not connected</span>
@@ -27,20 +33,29 @@
           </div>
         </header>
 
+        <div class="game-title">
+          <p>Ritual Testnet Slot</p>
+          <h1>Mahjong Fortune II</h1>
+          <span>1888 Ways</span>
+        </div>
+
         <div class="game-layout">
-          <section class="machine" aria-label="Fruit slot machine">
+          <section class="machine" aria-label="Mahjong slot machine">
+            <div class="multiplier-track" aria-label="Multiplier">
+              <strong class="active">x1</strong>
+              <strong>x2</strong>
+              <strong>x3</strong>
+              <strong>x5</strong>
+            </div>
+
             <div class="machine__header">
-              <div>
-                <p>Cluster pays demo</p>
-                <h2>Sweet Fruit Reels</h2>
-              </div>
-              <div class="balance-box">
-                <span>Chip Balance</span>
-                <strong id="chips">0</strong>
-              </div>
               <div class="balance-box balance-box--accent">
                 <span>Sisa Spin</span>
                 <strong id="remainingSpins">0</strong>
+              </div>
+              <div class="balance-box">
+                <span>Last Win</span>
+                <strong id="lastWin">0</strong>
               </div>
             </div>
 
@@ -48,23 +63,20 @@
 
             <div class="result-strip">
               <span id="resultText">Beli chip dengan RITUAL testnet untuk mulai spin.</span>
-              <strong id="lastWin">0</strong>
             </div>
 
-            <div class="bet-strip" aria-label="Bet controls">
-              <button class="step-button" id="decreaseBet" type="button">-</button>
+            <div class="bottom-console">
+              <button class="round-button" id="decreaseBet" type="button">-</button>
               <div class="bet-readout">
-                <span>Bet</span>
+                <span>Total Bet</span>
                 <strong id="betLabel">20</strong>
               </div>
-              <button class="step-button" id="increaseBet" type="button">+</button>
-              <div class="quick-bets" id="quickBets"></div>
+              <button class="round-button" id="increaseBet" type="button">+</button>
+              <button class="turbo-button" id="maxBetButton" type="button">Max</button>
+              <button class="spin-button" id="spinButton" type="button">Spin</button>
             </div>
 
-            <div class="spin-row">
-              <button class="primary-button" id="spinButton" type="button">Spin</button>
-              <button class="secondary-button" id="maxBetButton" type="button">Max Bet</button>
-            </div>
+            <div class="quick-bets" id="quickBets" aria-label="Quick bets"></div>
           </section>
 
           <aside class="cashier-panel" aria-label="Chip cashier">
@@ -72,7 +84,7 @@
               <p class="panel-kicker">Cashier</p>
               <h3>Buy Chips</h3>
               <p class="small-copy">
-                Kirim RITUAL testnet ke owner address, lalu chip masuk ke saldo game.
+                Kirim RITUAL testnet, lalu chip masuk ke saldo game.
               </p>
             </div>
 
