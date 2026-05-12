@@ -54,6 +54,7 @@ const state = {
   selectedAutoSpins: 10,
   autoRemaining: 0,
   autoTimer: null,
+  deadStreak: 0,
 };
 
 const el = {
@@ -184,23 +185,79 @@ function pickPayingSymbol() {
   return payingSymbols[Math.floor(Math.random() * payingSymbols.length)];
 }
 
-function buildSpinGrid() {
-  const roll = Math.random();
-  const target =
-    roll < 0.64 ? "loss" : roll < 0.88 ? "small" : roll < 0.97 ? "medium" : "big";
+function makeDeadGrid() {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const grid = makeGrid();
+    if (calculateWin(grid, 1).payout === 0) return grid;
+  }
+  return makeGrid();
+}
 
-  if (target === "loss") {
-    for (let attempt = 0; attempt < 40; attempt += 1) {
-      const grid = makeGrid();
-      if (calculateWin(grid, 1).payout === 0) return grid;
+function makeNearMissGrid() {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    const grid = makeGrid();
+    const matchSymbol = pickPayingSymbol();
+
+    for (let column = 0; column < 2; column += 1) {
+      const rows = new Set();
+      while (rows.size < 2) rows.add(Math.floor(Math.random() * BOARD_ROWS));
+      rows.forEach((row) => {
+        grid[column][row] = cloneSymbol(matchSymbol);
+      });
     }
-    return makeGrid();
+
+    grid[2] = grid[2].map((symbol) =>
+      symbol.name === matchSymbol.name || symbol.name === "wild" ? randomNonMatchingSymbol(matchSymbol) : symbol,
+    );
+
+    if (calculateWin(grid, 1).payout === 0) return grid;
   }
 
+  return makeDeadGrid();
+}
+
+function randomNonMatchingSymbol(matchSymbol) {
+  const pool = symbols.filter((symbol) => symbol.name !== matchSymbol.name && symbol.name !== "wild");
+  return cloneSymbol(pool[Math.floor(Math.random() * pool.length)]);
+}
+
+function chooseSpinTarget() {
+  const roll = Math.random();
+
+  if (state.deadStreak >= 5) {
+    if (roll < 0.45) return "near";
+    if (roll < 0.78) return "small";
+    if (roll < 0.94) return "medium";
+    return "big";
+  }
+
+  if (state.deadStreak >= 3) {
+    if (roll < 0.36) return "dead";
+    if (roll < 0.66) return "near";
+    if (roll < 0.88) return "small";
+    if (roll < 0.98) return "medium";
+    return "big";
+  }
+
+  if (roll < 0.58) return "dead";
+  if (roll < 0.82) return "near";
+  if (roll < 0.95) return "small";
+  if (roll < 0.992) return "medium";
+  return "big";
+}
+
+function buildSpinGrid() {
+  const target = chooseSpinTarget();
+
+  if (target === "dead") return makeDeadGrid();
+  if (target === "near") return makeNearMissGrid();
+
+  const roll = Math.random();
   const grid = makeGrid();
   const matchSymbol = pickPayingSymbol();
-  const matchReels = target === "small" ? 3 : target === "medium" ? 4 : 5;
-  const minPerReel = target === "small" ? 1 : 2;
+  const matchReels =
+    target === "small" ? 3 : target === "medium" ? (roll < 0.6 ? 3 : 4) : roll < 0.55 ? 4 : 5;
+  const minPerReel = target === "small" ? 1 : target === "medium" ? 1 : 2;
 
   for (let column = 0; column < matchReels; column += 1) {
     const usedRows = new Set();
@@ -289,6 +346,17 @@ function makeCascadeGrid(grid, winningCells) {
   });
 }
 
+function makeControlledCascadeGrid(grid, winningCells, allowFollowUp) {
+  if (allowFollowUp) return makeCascadeGrid(grid, winningCells);
+
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const nextGrid = makeCascadeGrid(grid, winningCells);
+    if (calculateWin(nextGrid, 1).payout === 0) return nextGrid;
+  }
+
+  return makeDeadGrid();
+}
+
 function calculateWin(grid, multiplier = 1) {
   let payout = 0;
   const winningCells = new Set();
@@ -322,9 +390,16 @@ function calculateWin(grid, multiplier = 1) {
   return { payout, winningCells: Array.from(winningCells) };
 }
 
-function renderMultiplier(activeIndex = 0) {
+function renderMultiplier(activeIndex = -1) {
   el.multiplierSteps.forEach((step, index) => {
     step.classList.toggle("active", index === activeIndex);
+  });
+}
+
+function flashChipDeduction() {
+  el.chips.classList.remove("deducting");
+  window.requestAnimationFrame(() => {
+    el.chips.classList.add("deducting");
   });
 }
 
@@ -504,12 +579,15 @@ async function spin() {
   state.chips -= state.bet;
   state.spinCount += 1;
   el.lastWin.textContent = "0";
-  el.resultText.textContent = "Spinning...";
+  el.resultText.textContent = `Bet -${state.bet.toLocaleString()} chips. Reels spinning...`;
   el.reels.classList.add("spinning");
+  flashChipDeduction();
   saveState();
   render();
 
-  await new Promise((resolve) => setTimeout(resolve, 750));
+  await new Promise((resolve) => setTimeout(resolve, 520));
+  el.resultText.textContent = "Almost there...";
+  await new Promise((resolve) => setTimeout(resolve, 460));
 
   let grid = buildSpinGrid();
   let totalPayout = 0;
@@ -521,10 +599,9 @@ async function spin() {
   while (cascadeIndex < cascadeMultipliers.length) {
     const multiplier = cascadeMultipliers[cascadeIndex];
     const { payout, winningCells } = calculateWin(grid, multiplier);
-    renderMultiplier(cascadeIndex);
-
     if (payout <= 0 || winningCells.length === 0) break;
 
+    renderMultiplier(cascadeIndex);
     totalPayout += payout;
     el.lastWin.textContent = totalPayout.toLocaleString();
     el.resultText.textContent = `Win x${multiplier}: ${payout.toLocaleString()} chips.`;
@@ -533,7 +610,8 @@ async function spin() {
     drawReels(grid, winningCells, true);
     el.resultText.textContent = `Pecah x${multiplier}, cascade lanjut...`;
     await new Promise((resolve) => setTimeout(resolve, 430));
-    grid = makeCascadeGrid(grid, winningCells);
+    const followUpChance = cascadeIndex === 0 ? 0.16 : cascadeIndex === 1 ? 0.08 : 0.035;
+    grid = makeControlledCascadeGrid(grid, winningCells, Math.random() < followUpChance);
     drawReels(grid);
     await new Promise((resolve) => setTimeout(resolve, 260));
     cascadeIndex += 1;
@@ -541,13 +619,16 @@ async function spin() {
 
   state.chips += totalPayout;
   state.bestWin = Math.max(state.bestWin, totalPayout);
+  state.deadStreak = totalPayout > 0 ? 0 : state.deadStreak + 1;
   state.spinning = false;
   el.lastWin.textContent = totalPayout.toLocaleString();
   el.resultText.textContent =
     totalPayout > 0
       ? `Total menang ${totalPayout.toLocaleString()} chips.`
-      : "Belum menang, coba spin lagi.";
-  renderMultiplier(0);
+      : state.deadStreak >= 3
+        ? "Dead spin. Momentum sedang dingin."
+        : "Near miss. Coba spin lagi.";
+  renderMultiplier(-1);
   saveState();
   render();
 
@@ -633,5 +714,5 @@ if (window.ethereum) {
 
 renderPackages();
 drawReels();
-renderMultiplier(0);
+renderMultiplier(-1);
 render();

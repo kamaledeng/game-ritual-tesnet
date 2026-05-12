@@ -13,6 +13,7 @@ Static mahjong slot-style game for Ritual testnet. Players buy demo chips by sen
 - Traditional-looking tile faces with characters, dots, bamboo, winds, dragons, and ivory styling
 - Premium casino UI skin with dark wood, gold, jade, ivory, lighting, and polished controls
 - Cascading wins with multiplier steps `x1`, `x2`, `x3`, `x5`
+- Balanced casino rhythm with dead spins, near misses, rarer wins, and less frequent multiplier cascades
 - Slot-style outcome balance with losing spins, small wins, medium wins, and rare bigger wins
 - Auto Spin presets: `10`, `50`, `100`
 - Win tile break/cascade visual effect

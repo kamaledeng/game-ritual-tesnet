@@ -170,6 +170,10 @@ button:disabled {
   line-height: 1;
 }
 
+.coin-meter strong.deducting {
+  animation: chipDeduct 520ms ease;
+}
+
 .wallet-panel {
   justify-content: flex-end;
   flex-wrap: wrap;
@@ -768,6 +772,24 @@ button:disabled {
     opacity: 0;
     transform: scale(0.18) rotate(-12deg);
     filter: brightness(1.9);
+  }
+}
+
+@keyframes chipDeduct {
+  0% {
+    color: #fff0bd;
+    transform: translateY(0);
+    text-shadow: none;
+  }
+  45% {
+    color: #ffb08a;
+    transform: translateY(2px);
+    text-shadow: 0 0 18px rgba(255, 120, 70, 0.42);
+  }
+  100% {
+    color: #fff0bd;
+    transform: translateY(0);
+    text-shadow: none;
   }
 }
 
