@@ -359,8 +359,24 @@ html[data-connected="false"] .secondary-button {
   justify-items: center;
   margin-bottom: 10px;
   text-align: center;
-  text-shadow: 0 3px 0 rgba(40, 20, 8, 0.7), 0 0 24px rgba(255, 220, 150, 0.16);
+  text-shadow: 0 3px 0 rgba(40, 20, 8, 0.7), 0 0 28px rgba(255, 220, 150, 0.2);
   z-index: 2;
+}
+
+.game-title::before {
+  content: "";
+  position: absolute;
+  top: 52px;
+  width: min(760px, 92%);
+  height: 220px;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255, 228, 160, 0.22), transparent 62%),
+    radial-gradient(circle at 30% 50%, rgba(66, 214, 155, 0.14), transparent 60%),
+    radial-gradient(circle at 70% 55%, rgba(255, 220, 140, 0.12), transparent 58%);
+  filter: blur(2px);
+  opacity: 0.9;
+  pointer-events: none;
+  animation: titleBreath 5.2s ease-in-out infinite;
 }
 
 .brand-logo {
@@ -393,16 +409,43 @@ html[data-connected="false"] .secondary-button {
 
 .game-title h1 {
   margin: 0;
-  color: #e9c776;
+  color: #ffe4a0;
   font-size: clamp(2.1rem, 5.8vw, 4.25rem);
   line-height: 0.95;
-  -webkit-text-stroke: 1px rgba(95, 59, 24, 0.72);
+  letter-spacing: 0.01em;
+  background: linear-gradient(180deg, #fff3bd 0%, #ffe09a 22%, #dcb460 58%, #8d5b22 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 1px rgba(95, 59, 24, 0.62);
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.34));
+  position: relative;
+}
+
+.game-title h1::after {
+  content: "";
+  display: block;
+  width: min(520px, 72%);
+  height: 2px;
+  margin: 10px auto 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 228, 160, 0.85),
+    rgba(66, 214, 155, 0.55),
+    rgba(255, 228, 160, 0.85),
+    transparent
+  );
+  box-shadow: 0 0 22px rgba(255, 220, 140, 0.16);
+  opacity: 0.9;
 }
 
 .game-title span {
-  color: rgba(255, 239, 197, 0.34);
+  color: rgba(255, 239, 197, 0.42);
   font-size: clamp(1rem, 2.4vw, 1.8rem);
   font-weight: 900;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
@@ -1482,6 +1525,20 @@ html[data-connected="false"] .secondary-button {
   100% {
     transform: translateX(32%);
     opacity: 0.15;
+  }
+}
+
+@keyframes titleBreath {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: translateY(0) scale(1);
+    filter: blur(2px) brightness(1);
+  }
+  50% {
+    opacity: 0.98;
+    transform: translateY(-2px) scale(1.02);
+    filter: blur(1px) brightness(1.08);
   }
 }
 
