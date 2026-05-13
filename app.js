@@ -72,6 +72,10 @@ if (DEV_FORCE_OUTCOME) {
 }
 
 const SPIN_SPEED_IDS = ["slow", "normal", "turbo"];
+// Ganti value ini untuk ubah "mode" game:
+// - "easy-domino"  : lebih gampang menang
+// - "high-domino"  : default (lebih sering dead spin)
+// - "hard-domino"  : lebih susah menang
 const DEFAULT_MATH_PROFILE = "high-domino";
 const MATH_PROFILES = {
   balanced: {
@@ -118,6 +122,36 @@ const MATH_PROFILES = {
     },
     deadStreakCap: 6,
     deadStreakShift: 0.006,
+  },
+  "easy-domino": {
+    label: "Easy Domino",
+    payoutDivisor: 22,
+    bonusTriggerChance: 0.004,
+    symbolChances: {
+      base: { scatter: 0.0065, wild: 0.0105 },
+      bonus: { scatter: 0.0044, wild: 0.013 },
+    },
+    weights: {
+      base: { dead: 0.4, near: 0.2, small: 0.25, medium: 0.12, big: 0.03 },
+      bonus: { dead: 0.25, near: 0.22, small: 0.27, medium: 0.18, big: 0.08 },
+    },
+    deadStreakCap: 6,
+    deadStreakShift: 0.02,
+  },
+  "hard-domino": {
+    label: "Hard Domino",
+    payoutDivisor: 38,
+    bonusTriggerChance: 0.0015,
+    symbolChances: {
+      base: { scatter: 0.0065, wild: 0.0105 },
+      bonus: { scatter: 0.0044, wild: 0.013 },
+    },
+    weights: {
+      base: { dead: 0.7, near: 0.18, small: 0.095, medium: 0.02, big: 0.005 },
+      bonus: { dead: 0.35, near: 0.25, small: 0.24, medium: 0.12, big: 0.04 },
+    },
+    deadStreakCap: 6,
+    deadStreakShift: 0.004,
   },
 };
 
