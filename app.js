@@ -106,18 +106,18 @@ const MATH_PROFILES = {
   },
   "high-domino": {
     label: "High Domino",
-    payoutDivisor: 25,
-    bonusTriggerChance: 0.0038,
+    payoutDivisor: 35,
+    bonusTriggerChance: 0.002,
     symbolChances: {
       base: { scatter: 0.0065, wild: 0.0105 },
       bonus: { scatter: 0.0044, wild: 0.013 },
     },
     weights: {
-      base: { dead: 0.5, near: 0.18, small: 0.22, medium: 0.08, big: 0.02 },
+      base: { dead: 0.68, near: 0.18, small: 0.11, medium: 0.025, big: 0.005 },
       bonus: { dead: 0.28, near: 0.22, small: 0.26, medium: 0.17, big: 0.07 },
     },
     deadStreakCap: 6,
-    deadStreakShift: 0.016,
+    deadStreakShift: 0.006,
   },
 };
 
