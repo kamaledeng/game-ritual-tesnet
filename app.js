@@ -32,6 +32,45 @@ const chipPackages = [
   { ritual: "0.1", chips: 15000 },
 ];
 
+// Dev/testing helper:
+// You can force an outcome ONLY when running locally (localhost / file://).
+// Example:
+//   index.html?forceOutcome=win
+//   index.html?forceOutcome=lose
+//   index.html?forceOutcome=bonus
+function isLocalDevRuntime() {
+  const host = window.location?.hostname || "";
+  const protocol = window.location?.protocol || "";
+  return (
+    protocol === "file:" ||
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "0.0.0.0"
+  );
+}
+
+function readDevForcedOutcome() {
+  try {
+    if (!isLocalDevRuntime()) return null;
+    const params = new URLSearchParams(window.location?.search || "");
+    const raw = (params.get("forceOutcome") || params.get("force") || params.get("outcome") || "")
+      .trim()
+      .toLowerCase();
+    if (!raw) return null;
+    if (raw === "dead") return "lose";
+    if (raw === "win" || raw === "lose" || raw === "bonus") return raw;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+const DEV_FORCE_OUTCOME = readDevForcedOutcome();
+if (DEV_FORCE_OUTCOME) {
+  // eslint-disable-next-line no-console
+  console.warn(`[DEV] Forced outcome enabled: ${DEV_FORCE_OUTCOME}`);
+}
+
 const SPIN_SPEED_IDS = ["slow", "normal", "turbo"];
 const DEFAULT_MATH_PROFILE = "high-domino";
 const MATH_PROFILES = {
@@ -655,6 +694,24 @@ function chooseSpinTarget(options = {}) {
 }
 
 function buildSpinGrid(options = {}) {
+  if (DEV_FORCE_OUTCOME === "lose") {
+    const grid = makeDeadGrid(options);
+    applyGoldPlating(grid, options);
+    return { grid, target: "dead" };
+  }
+
+  if (DEV_FORCE_OUTCOME === "bonus") {
+    const grid = makeScatterTriggerGrid();
+    applyGoldPlating(grid, options);
+    return { grid, target: "bonus" };
+  }
+
+  if (DEV_FORCE_OUTCOME === "win") {
+    const grid = makeForcedWinGrid(options);
+    applyGoldPlating(grid, options);
+    return { grid, target: "forced-win" };
+  }
+
   const target = chooseSpinTarget(options);
 
   if (target === "dead") {
